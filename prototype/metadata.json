@@ -1,0 +1,6 @@
+{
+  "name": "SoulAI",
+  "description": "AI Spiritual Wellness Companion, offering personal daily insights, astrological & tarot readings, AI companion chats, and a mind-body healing center.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

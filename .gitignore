@@ -1,0 +1,13 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+.mimo-bridge-state.json
+
+# Playwright generated artifacts
+frontend/playwright-report/
+frontend/test-results/

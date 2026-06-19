@@ -1,0 +1,18 @@
+{ 
+	"$schema": "https://mimo.xiaomi.com//config.json" ,
+	"mcp":{
+	    "MiniMax": {
+            "type": "local",
+            "command": [
+                "uvx",
+                "minimax-coding-plan-mcp",
+                "-y"
+            ],
+            "environment": {
+                "MINIMAX_API_KEY": "sk-cp-MK8HAnWx7TzmnvzpWSKwcVE-Ydoiysw5zs0d7qKenX0RYkNqb_EfSdBvXDrL_KY7ravM7K3gXh-aru2lUXUR5GzdDgBeUBk8QWFkygimSFRKTa6mzcm7grA",
+                "MINIMAX_API_HOST": "https://api.minimaxi.com"
+            },
+            "enabled": true
+        }
+	}
+}

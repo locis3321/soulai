@@ -1,0 +1,227 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model
+model User {
+  id                String    @id @default(uuid())
+  email             String    @unique
+  name              String
+  passwordHash      String    @map("password_hash")
+  avatarUrl         String?   @map("avatar_url")
+  birthDate         DateTime? @map("birth_date")
+  birthTime         String?   @map("birth_time")
+  birthPlace        String?   @map("birth_place")
+  language          String    @default("en")
+  subscriptionTier  String    @default("free") @map("subscription_tier")
+  subscriptionStart DateTime? @map("subscription_start_date")
+  subscriptionEnd   DateTime? @map("subscription_end_date")
+  isActive          Boolean   @default(true) @map("is_active")
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  profile           UserProfile?
+  moodCheckIns      MoodCheckIn[]
+  journals          Journal[]
+  tarotReadings     TarotReading[]
+  astrologyReadings AstrologyReading[]
+  chatSessions      ChatSession[]
+  payments          Payment[]
+  subscriptions     Subscription[]
+  activities        UserActivity[]
+
+  @@map("users")
+}
+
+// User profile with calculated data
+model UserProfile {
+  id              String   @id @default(uuid())
+  userId          String   @unique @map("user_id")
+  zodiacSign      String?  @map("zodiac_sign")
+  risingSign      String?  @map("rising_sign")
+  moonSign        String?  @map("moon_sign")
+  lifePathNumber  Int?     @map("life_path_number")
+  baziData        Json?    @map("bazi_data")
+  ziweiData       Json?    @map("ziwei_data")
+  preferences     Json     @default("{}")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_profiles")
+}
+
+// Mood check-in records
+model MoodCheckIn {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  mood        String
+  note        String?
+  energyScore Int?     @map("energy_score")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("mood_checkins")
+}
+
+// Journal entries
+model Journal {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  title     String
+  content   String
+  mood      String?
+  tags      String[]
+  isPrivate Boolean  @default(true) @map("is_private")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("journals")
+}
+
+// Tarot reading records
+model TarotReading {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  question    String?
+  spreadType  String   @map("spread_type")
+  cards       Json
+  readingText String?  @map("reading_text")
+  isPaid      Boolean  @default(false) @map("is_paid")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("tarot_readings")
+}
+
+// Astrology reading records
+model AstrologyReading {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  readingType String   @map("reading_type")
+  birthData   Json     @map("birth_data")
+  readingText String?  @map("reading_text")
+  chartData   Json?    @map("chart_data")
+  isPaid      Boolean  @default(false) @map("is_paid")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("astrology_readings")
+}
+
+// Chat sessions
+model ChatSession {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  advisorKey  String   @map("advisor_key")
+  title       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages ChatMessage[]
+
+  @@index([userId])
+  @@map("chat_sessions")
+}
+
+// Chat messages
+model ChatMessage {
+  id         String   @id @default(uuid())
+  sessionId  String   @map("session_id")
+  role       String
+  content    String
+  tokensUsed Int?     @map("tokens_used")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  // Relations
+  session ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@map("chat_messages")
+}
+
+// Payment records
+model Payment {
+  id             String   @id @default(uuid())
+  userId         String   @map("user_id")
+  amount         Decimal
+  currency       String   @default("USD")
+  paymentMethod  String?  @map("payment_method")
+  paymentStatus  String   @default("pending") @map("payment_status")
+  stripePaymentId String? @map("stripe_payment_id")
+  description    String?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscription  Subscription?
+
+  @@index([userId])
+  @@map("payments")
+}
+
+// Subscription records
+model Subscription {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  tier      String
+  startDate DateTime @map("start_date")
+  endDate   DateTime? @map("end_date")
+  isActive  Boolean  @default(true) @map("is_active")
+  autoRenew Boolean  @default(true) @map("auto_renew")
+  paymentId String?  @map("payment_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payment Payment? @relation(fields: [paymentId], references: [id])
+
+  @@index([userId])
+  @@map("subscriptions")
+}
+
+// User activity for analytics
+model UserActivity {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  activityType String   @map("activity_type")
+  activityData Json?    @map("activity_data")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("user_activity")
+}

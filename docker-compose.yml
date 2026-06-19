@@ -1,0 +1,131 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: soulai-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: soulai
+      POSTGRES_PASSWORD: soulai_password
+      POSTGRES_DB: soulai_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U soulai -d soulai_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: soulai-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --requirepass soulai_redis_password
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "soulai_redis_password", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend API Server
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: soulai-backend
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      DATABASE_URL: postgresql://soulai:soulai_password@postgres:5432/soulai_db
+      REDIS_URL: redis://:soulai_redis_password@redis:6379
+      JWT_SECRET: your_jwt_secret_key_here
+      CORS_ORIGIN: http://localhost:3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend/src:/app/src
+      - ./backend/prisma:/app/prisma
+
+  # Astrology Service (Python)
+  astrology:
+    build:
+      context: ./services/astrology
+      dockerfile: Dockerfile
+    container_name: soulai-astrology
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      REDIS_URL: redis://:soulai_redis_password@redis:6379
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./services/astrology/app:/app/app
+
+  # Frontend (Development)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: soulai-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      VITE_API_URL: http://localhost:4000
+      VITE_ASTROLOGY_URL: http://localhost:8000
+    depends_on:
+      - backend
+      - astrology
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+
+  # Adminer (Database Management UI)
+  adminer:
+    image: adminer:latest
+    container_name: soulai-adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # Redis Commander (Redis Management UI)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: soulai-redis-commander
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    environment:
+      REDIS_HOSTS: local:redis:6379:0:soulai_redis_password
+    depends_on:
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
