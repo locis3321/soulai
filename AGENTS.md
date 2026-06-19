@@ -388,20 +388,45 @@ Do not create additional planning documents unless requested. Prefer updating ex
 - `src/components/Disclaimer.tsx` - Disclaimer component
 - `src/components/discover/TarotModule.tsx` - Extracted tarot module
 
-### Next Steps (Phase 1: Web MVP)
+### Phase 1: Web MVP Status (Completed 2026-06-19)
 
-**Priority Tasks:**
+All Phase 1 tasks are implemented and verified:
 
-1. Implement user authentication and registration
-2. Migrate localStorage data to backend database
-3. Implement personalized daily insights
-4. Build multi-advisor AI chat system
-5. Complete tarot card experience with multiple spreads
-6. Integrate `iztro` for Zi Wei Dou Shu calculations
-7. Integrate Swiss Ephemeris for Western astrology
-8. Implement healing journal and mood tracking
-9. Build single-purchase report system
-10. Implement basic subscription management
+1. ✅ User authentication and registration (JWT, register/login/me/refresh)
+2. ✅ Backend database integration (PostgreSQL via Docker, all CRUD routes)
+3. ✅ Personalized daily insights (AI-generated with user context)
+4. ✅ Multi-advisor AI chat system (4 personas: Luna, Athena, Mystic, Zen)
+5. ✅ Complete tarot experience (78-card deck, single/3-card/celtic spreads)
+6. ✅ `iztro` integration for Zi Wei Dou Shu (deterministic calculation)
+7. ✅ Swiss Ephemeris integration for Western astrology (swisseph)
+8. ✅ Healing journal and mood tracking (CRUD + stats)
+9. ✅ Payment integration (Alipay/WeChat Pay with order metadata)
+10. ✅ Subscription management UI (tier comparison, payment flow, cancel)
+
+**New modules added:**
+- `components/PaywallModal.tsx` - Premium feature gating
+- `components/SubscriptionPage.tsx` - Subscription management
+- `components/discover/AstrologyModule.tsx` - Extracted astrology module
+- `components/discover/BaZiModule.tsx` - Extracted BaZi module
+- `components/discover/ZiWeiModule.tsx` - Extracted ZiWei module
+- `components/discover/NumerologyModule.tsx` - Extracted numerology module
+- `backend/src/services/astrology.ts` - swisseph natal chart calculation
+- `backend/src/services/bazi.ts` - lunar-javascript BaZi calculation
+- `backend/src/services/ziwei.ts` - iztro Zi Wei calculation
+- `backend/src/routes/bazi.ts`, `numerology.ts`, `ziwei.ts` - API routes
+- `backend/src/types/lunar-javascript.d.ts` - TypeScript declarations
+
+**E2e tests:** 8 Playwright tests passing (chromium). Auth, navigation, API routes, BaZi calculate button, tarot API, healing API, console errors.
+
+### Remaining Work (Not MVP-Blocking)
+
+- Analytics event tracking
+- Translation file modularization (currently single file)
+- Content moderation system
+- Practitioner marketplace backend
+- Community UGC features
+- Data privacy/GDPR compliance
+- Mobile app (Flutter) after web MVP metrics validation
 
 ### Development Guidelines
 
