@@ -15,7 +15,6 @@
     "tabChat": "ครูบาอาจารย์",
     "tabCommunity": "ศาลาธรรม",
     "tabMarketplace": "วัตถุมงคล",
-    
     "altarTitle": "โต๊ะหมู่บูชาและบ่อน้ำสะสมบุญ",
     "altarDesc": "สะสมส่วนบุญกุศล เวียนเทียนจุดบูชาประทีปบัวทอง และฟังเสียงสวดพระพุทธมนต์เพื่อความสงบจิตใจ",
     "tapWoodenFish": "เคาะระฆังและเคาะไม้กุศล (กบไม้)",
@@ -39,7 +38,6 @@
     "gongSoundEffect": "ตีระฆังธรรม",
     "meritAdded": "ส่วนบุญกุศล +1",
     "blessingFor": "อุทิศส่วนกุศลให้แก่",
-    
     "welcome": "เจริญพร",
     "welcomeBack": "ยินดีต้อนรับกลับ",
     "celestialCurrents": "สภาพพลังงานจิตวิญญาณวันนี้",
@@ -74,7 +72,6 @@
     "buddhistAltar": "โต๊ะหมู่บูชา",
     "offerLamp": "จุดประทีปบูชา",
     "merits": "บุญกุศล",
-    
     "tarotConsult": "ทำนายดวงไพ่ยิปซีศักดิ์สิทธิ์",
     "tarotConsultDesc": "ตั้งจิตอธิษฐานถามคำถามธรรมะหรือเรื่องส่วนตัวให้ชัดเจน แล้วเลือกไพ่ 3 ใบจากสำรับ",
     "askQuestionPlaceholder": "ตัวอย่าง: จิตวิญญาณของเป้าหมายชีวิตการงานต้องการเรียนรู้บทเรียนธรรมะใดในภพนี้?",
@@ -91,7 +88,6 @@
     "baziBaziDesc": "คำนวณตามปี เดือน วัน เวลาที่จิตดวงนี้จุติเข้าสู่ขันธ์จำลองนี้ในภพมนุษย์เพื่อสะสางกรรม",
     "numberMysticism": "ตัวเลขมหัศจรรย์สอดคล้องประสาน",
     "numberMysticismDesc": "แปลงนามและวันเกิดเป็นความถี่ตัวเลขแห่งจักรวาล สังเกตตัวเลขซ้ำรอบตัวเพื่อสาส์นสวรรค์",
-    
     "chatAdvisorTitle": "สภาครูบาอาจารย์ผู้มีญาณทัศนะ",
     "chatAdvisorDesc": "สนทนาธรรมกับครูบาอาจารย์ผสานปัญญาโหราศาสตร์ตะวันตกและจิตวิญญาณพระพุทธศาสนาสายวิปัสสนาเซน",
     "chatPlaceholder": "บอกเล่าเรื่องราวความอึดอัดใจ... จิตวิญญาณและความทุกข์ของคุณคุยปัดเป่าได้ด้วยธรรมะที่นี่",
@@ -101,7 +97,6 @@
     "guidedDharmaFocus": "เราสามารถเปลี่ยนงานทางโลกที่แสนวุ่นวาย ให้เป็นพุทธบูชาได้อย่างไรครับ",
     "sendBtn": "ส่ง",
     "typeMessage": "พิมพ์ข้อความ...",
-    
     "recoveryTitle": "ห้องฟื้นฟูจิตภายใน",
     "recoveryDesc": "ผ่อนคลายชีพจรด้วยเสียงดนตรีทางธรรม สติอานาปานสติ และหลักธรรมรักษาไข้ใจ",
     "emotionalClimateTitle": "สภาวะจิตใจปัจจุบันขอบเขตใด?",
@@ -131,7 +126,6 @@
     "newJournalEntry": "สร้างบันทึกใหม่",
     "title": "หัวเรื่อง",
     "saveJournal": "บันทึกธรรม",
-    
     "profileTitle": "แผนผังมณฑลจิตวิญญาณและชะตา",
     "profileTitleDesc": "ปรับเทียบพิกัดการถือกำเนิดทางโลกของคุณ เพื่อคำนวณจักรราศีทางธรรม คัมภีร์ดวงจีน และประวัติพยากรณ์ได้อย่างแม่นยำสูงสุด",
     "natalCoords": "พิกัดธาตุขันธ์กำเนิด",
@@ -154,7 +148,6 @@
     "settings": "ตั้งค่า",
     "language": "ภาษา",
     "logout": "ออกจากระบบ",
-    
     "onboarding": {
       "welcome": "ยินดีต้อนรับสู่ SoulAI",
       "welcomeDesc": "ปลดล็อกรหัสสวรรค์เฉพาะบุคคล ผสมผสานปัญญาโบราณตะวันออกกับระบบ Oracle ตะวันตก 同步화ชะตากรรมที่แท้จริงของคุณ",
@@ -188,7 +181,6 @@
       "googleSync": "ซิงค์ Google",
       "appleID": "Apple ID"
     },
-    
     "disclaimer": {
       "general": {
         "title": "ประกาศสำคัญ",
@@ -207,7 +199,6 @@
         "content": "เนื้อหาการบำบัดสนับสนุนสุขภาพทางอารมณ์และความมีสติ ไม่สามารถทดแทนการรักษาทางการแพทย์หรือจิตวิทยาจากผู้เชี่ยวชาญ ปรึกษาผู้ให้บริการด้านสุขภาพสำหรับปัญหาทางการแพทย์"
       }
     },
-    
     "common": {
       "loading": "กำลังโหลด...",
       "error": "ข้อผิดพลาด",
@@ -225,6 +216,224 @@
       "open": "เปิด",
       "yes": "ใช่",
       "no": "ไม่"
+    },
+    "discover": {
+      "title": "Destiny Center Hub",
+      "subtitle": "Combine multi-cultural Oracle wisdom across Eastern lineage charts and Western astrology",
+      "tarot": {
+        "title": "Tarot Oracles",
+        "subtitle": "Past, Present & Future Reading",
+        "desc": "Formulate physical or spiritual inquiries and draw standard archetypal spreads to reveal your soul pathway.",
+        "badge": "Interactive"
+      },
+      "astrology": {
+        "title": "Astrology Mapping",
+        "subtitle": "Western Natal House Charts",
+        "desc": "Retrieve precise aspects of your birth time, sun/moon geometries, and current transit synchronizations.",
+        "badge": "Natal & Houses"
+      },
+      "bazi": {
+        "title": "BaZi (8-Characters)",
+        "subtitle": "Four Pillars of Destiny Chart",
+        "desc": "Ancient Chinese sexagenary cycle mapping. Calculate your day master element and decade luck profiles.",
+        "badge": "Five Elements"
+      },
+      "ziwei": {
+        "title": "Zi Wei Dou Shu",
+        "subtitle": "Purple Emperor Destiny Palaces",
+        "desc": "Classic astrological wisdom mapping 12 pristine domains of existence including Wealth, Spouse, and Travel.",
+        "badge": "12 Palaces"
+      },
+      "iching": {
+        "title": "I Ching Divination",
+        "subtitle": "Hexagram Sage Changes",
+        "desc": "Consult the legendary Book of Changes by casting dynamic hexagram lines to gauge the flows of current Qi.",
+        "badge": "Book of Changes"
+      },
+      "liuyao": {
+        "title": "Liu Yao 3-Coins",
+        "subtitle": "Lineage Coin Toss Ritual",
+        "desc": "Establish moving line structures by interactive coin tossing to gain profound directives for career or life choices.",
+        "badge": "Coin Method"
+      },
+      "numerology": {
+        "title": "Aura Numerology Grid",
+        "subtitle": "Life Path & Vibrational Synchronicity",
+        "desc": "Decipher master numbers like 11 & 22 that manifest in your daily timeline. Walk through the intuitive gates.",
+        "badge": "Soul Numbers"
+      },
+      "divinationProtocol": "DIVINATION PROTOCOL",
+      "consult": "Consult",
+      "weeklyGuru": "WEEKLY GURU SELECTION",
+      "masterRankings": "Master Rankings & Recommendations",
+      "nextPage": "Next Page Directory",
+      "hot": "HOT",
+      "zen": "ZEN",
+      "sincerities": "Sincerities",
+      "weeklyHonor": "Weekly Sages Consultations Honor Board",
+      "refreshedDaily": "Refreshed Daily",
+      "viewAll": "View All Spiritual Sages",
+      "consultations": "sess",
+      "tarotModule": {
+        "title": "Interactive Tarot Oracle",
+        "desc": "Formulate a clear inquiry. Select cards from the face-down deck below to calibrate alignments.",
+        "singleCard": "Single Card Focal Point",
+        "threeCards": "Past, Present & Future (3-Cards)",
+        "celticCross": "Celtic Cross spread (10-Cards)",
+        "selectCards": "Draw your cards from the sanctuary deck",
+        "reshuffle": "Re-shuffle Deck",
+        "oracleResponse": "ALIGNED ORACLE RESPONSE",
+        "clearAnalysis": "Clear Analysis",
+        "consulting": "Consulting Tarot Oracles..."
+      },
+      "astrologyModule": {
+        "title": "Personal Astrological Natal Map Analysis",
+        "desc": "Synthesize planetary coordinates based on your birthday and birth time alignment.",
+        "generate": "Generate Planetary Blueprint",
+        "compatibility": "Zodiac Compatibility Synastry",
+        "partnerName": "Companion Name",
+        "zodiacSign": "Stellar Zodiac Sign",
+        "analyze": "Analyze Synastry Conjunction"
+      },
+      "baziModule": {
+        "title": "BaZi Elemental Energy Map",
+        "desc": "Based on the sexagenary cycle & elements mapping the hour, day, month, and year of your ingress.",
+        "hourPillar": "HOUR PILLAR",
+        "dayPillar": "DAY PILLAR",
+        "monthPillar": "MONTH PILLAR",
+        "yearPillar": "YEAR PILLAR",
+        "fiveElements": "Five Elements Core Ratio",
+        "wood": "Wood (Benevolence)",
+        "fire": "Fire (Passion / Officers)",
+        "earth": "Earth (Stability / Wealth)",
+        "water": "Water (Wisdom / Resource)",
+        "metal": "Metal (Justice / Structure)",
+        "luckCycle": "10-Year Luck Cycle Timeline"
+      },
+      "ziweiModule": {
+        "title": "Zi Wei Dou Shu (Twelve Palaces of Destiny)",
+        "desc": "Mapped using traditional rectangular calendar arrangements. Select a Cosmic Palace below.",
+        "life": "Life Palace",
+        "siblings": "Siblings Palace",
+        "spouse": "Spouse Palace",
+        "children": "Children Palace",
+        "wealth": "Wealth Palace",
+        "health": "Health Palace",
+        "travel": "Travel Palace",
+        "friends": "Friends Palace",
+        "career": "Career Palace",
+        "property": "Property Palace",
+        "fortune": "Fortune Palace",
+        "parents": "Parents Palace"
+      },
+      "ichingModule": {
+        "title": "I Ching (Classic Book of Changes) Divination",
+        "desc": "The ancient binary Oracle of the sages. Direct your thoughts to any active life query.",
+        "cast": "Cast Dynamic I Ching Hexagram",
+        "casting": "Casting Hexagram Lines..."
+      },
+      "liuyaoModule": {
+        "title": "Liu Yao 3-Coins Divination",
+        "desc": "Liu Yao requires tossing 3 coins exactly 6 times to establish moving and constant structures.",
+        "toss": "Toss Coins",
+        "tossing": "Tossing Auspicious Coins...",
+        "reset": "Reset"
+      },
+      "numerologyModule": {
+        "title": "Aura Numerology Guide & Grid",
+        "desc": "Your name and birth matrix convert into energetic numbers."
+      }
+    },
+    "advisors": {
+      "luna": {
+        "name": "Luna",
+        "title": "The Gentle Healer",
+        "desc": "Channels soft lunar energy of deep understanding, emotional safety, and soothing healing."
+      },
+      "athena": {
+        "name": "Athena",
+        "title": "The Rational Counselor",
+        "desc": "Bridges rational logic, cognitive psychology, and macrocosmic wisdom."
+      },
+      "mystic": {
+        "name": "Mystic",
+        "title": "The Sacred Diviner",
+        "desc": "Provides archetypal counseling connected to astrology, tarot patterns, and planetary alignments."
+      },
+      "zen": {
+        "name": "Zen",
+        "title": "The Mindful Rishi",
+        "desc": "Represents absolute presence, breath-awareness, and profound stillness."
+      }
+    },
+    "profile": {
+      "title": "Soul Profile & Settings",
+      "subtitle": "Configure language, synchronization, and spiritual coordinates",
+      "logout": "Log Out Account",
+      "login": "Log In Soul Sync",
+      "activeAccount": "Active Soul Sync Account",
+      "guestMode": "Guest Pilgrim Mode",
+      "connectEmail": "Connected Soul Email",
+      "loginDesc": "Sync your karma points, wooden fish taps, and tarot history across devices.",
+      "privacyTitle": "System Privacy & Security Agreement",
+      "privacyText": "Your birth metrics, chakra journals, and tarot inquiries represent sacred personal fields. In compliance with strict native guidelines (APK/IPA terms), all reports generated are processed with secure end-to-end cloud encryption. No advertisement telemetry or secular behavioral data tracking is ever used inside this application.",
+      "aboutTitle": "About SoulAI Sanctuary",
+      "aboutText": "Developed as a synchronized Western Astrological and Eastern Zen Buddhist companion. Running on secure server-side Gemini engines, we provide high-vibrational guidance to quieten thoughts.",
+      "appModel": "SoulAI Native Shell V1.0.4",
+      "platformSpec": "Fully Optimized for APK & IPA Packaging",
+      "calibrateLabel": "Calibrate Birth Coordinates",
+      "selectLang": "Change System Language",
+      "activeLangLabel": "Active Language",
+      "logoutSuccess": "✓ Successfully disconnected. Log back in to sync.",
+      "loginSuccess": "✓ Soul Sync established. Welcome back, pilgrim!",
+      "secLogin": "Secret Passcode",
+      "unlockedRecords": "Calculated Natal Charts",
+      "enterAny": "Enter any email to simulate local-native profile sync."
+    },
+    "marketplace": {
+      "title": "Top Chosen Masters",
+      "all": "All",
+      "tarot": "Tarot",
+      "bazi": "BaZi",
+      "astrology": "Astrology",
+      "sound": "Zen Sound",
+      "backToMall": "Back to Mall",
+      "itemInfo": "Spiritual Item Info",
+      "deliveries": "Deliveries Saved",
+      "feedbackLogs": "Feedback logs",
+      "description": "Spiritual Description / Bio",
+      "price": "Price",
+      "perSession": "45Mins",
+      "customize": "Customize Consulting Specifications",
+      "orderSuccess": "Order Placed Successfully!",
+      "placeOrder": "Finalize Karma Settlement",
+      "buyerFeedback": "Buyer Feedback Logs",
+      "searchPlaceholder": "Search Gurus, tarot, bazi...",
+      "myOrders": "My Orders & Booked Services",
+      "promoBanner": "Align Your Elements: Get 15% OFF on Deep BaZi consults!",
+      "topMasters": "Top Chosen Masters",
+      "weeklyHonor": "Weekly Divine Sages Honor Board",
+      "consultations": "consultations",
+      "viewAll": "View All Spiritual Sages",
+      "allMasters": "All Spiritual Lineage Sages",
+      "backToRankings": "Back to Rankings"
+    },
+    "community": {
+      "title": "Community",
+      "allFeeds": "Explore all discussions across nodes",
+      "astrologyDesc": "Planetary movements & alignments",
+      "tarotDesc": "Card spreads & archetypes",
+      "baziDesc": "Four Pillars & seasonal flow",
+      "ziweiDesc": "Purple Star house predictions",
+      "healingDesc": "Somatic integration & wellness",
+      "relationshipsDesc": "Compatibility & ties",
+      "allFeedsLabel": "All Feeds",
+      "astrologyLabel": "Astrology",
+      "tarotLabel": "Tarot",
+      "baziLabel": "BaZi",
+      "ziweiLabel": "Zi Wei",
+      "healingLabel": "Healing",
+      "relationshipsLabel": "Love"
     }
   }
 }
