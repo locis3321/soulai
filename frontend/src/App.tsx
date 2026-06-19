@@ -205,10 +205,15 @@ export default function App() {
         .then((data) => {
           if (data.user) {
             setUser(data.user)
+            // Derive onboarding state from backend profile
+            if (data.user.birthDate) {
+              setHasOnboarded(true)
+            }
           }
         })
         .catch(() => {
           logout()
+          setHasOnboarded(false)
         })
     }
   }, []) // Only on mount

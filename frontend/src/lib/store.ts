@@ -93,6 +93,7 @@ export const useStore = create<AppState>()(
             isLoading: false,
             error: null,
           },
+          hasOnboarded: false,
         }),
 
       // UI State

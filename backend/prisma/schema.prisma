@@ -170,22 +170,26 @@ model ChatMessage {
 
 // Payment records
 model Payment {
-  id             String   @id @default(uuid())
-  userId         String   @map("user_id")
-  amount         Decimal
-  currency       String   @default("USD")
-  paymentMethod  String?  @map("payment_method")
-  paymentStatus  String   @default("pending") @map("payment_status")
-  stripePaymentId String? @map("stripe_payment_id")
-  description    String?
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  id                    String   @id @default(uuid())
+  userId                String   @map("user_id")
+  orderId               String?  @unique @map("order_id")
+  planId                String?  @map("plan_id")
+  amount                Decimal
+  currency              String   @default("CNY")
+  paymentMethod         String?  @map("payment_method")
+  paymentStatus         String   @default("pending") @map("payment_status")
+  stripePaymentId       String?  @map("stripe_payment_id")
+  providerTransactionId String?  @map("provider_transaction_id")
+  description           String?
+  createdAt             DateTime @default(now()) @map("created_at")
+  updatedAt             DateTime @updatedAt @map("updated_at")
 
   // Relations
   user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   subscription  Subscription?
 
   @@index([userId])
+  @@index([orderId])
   @@map("payments")
 }
 
@@ -198,7 +202,7 @@ model Subscription {
   endDate   DateTime? @map("end_date")
   isActive  Boolean  @default(true) @map("is_active")
   autoRenew Boolean  @default(true) @map("auto_renew")
-  paymentId String?  @map("payment_id")
+  paymentId String?  @unique @map("payment_id")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 

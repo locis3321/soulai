@@ -94,6 +94,41 @@ Scripts from `prototype/package.json`:
 
 The dev server runs on port `3000` via `server.ts`.
 
+## Local Development (frontend/ + backend/)
+
+### Prerequisites
+
+- Node.js 20+
+- PostgreSQL 15 + Redis 7 (or use Docker)
+
+### Quick Start with Docker
+
+```bash
+docker compose up --build
+# Frontend: http://localhost:3000 | Backend: http://localhost:4000
+# Adminer: http://localhost:8080 | Redis UI: http://localhost:8081
+```
+
+### Manual Setup
+
+```bash
+# 1. Start PostgreSQL + Redis, then init DB:
+psql -U soulai -d soulai_db -f init.sql
+
+# 2. Backend:
+cd backend && cp .env.example .env && npm install && npm run dev
+
+# 3. Frontend (separate terminal):
+cd frontend && npm install && npm run dev
+```
+
+### Verification
+
+```bash
+cd backend && npm run lint && npx vitest run
+cd frontend && npm run lint && npx vitest run && npx playwright test --project=chromium
+```
+
 ## Environment Variables
 
 See `.env.example` and `prototype/.env` if present.

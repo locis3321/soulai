@@ -45,12 +45,15 @@ router.post('/reading', async (req: AuthRequest, res: Response) => {
     const userId = req.userId
     const { question, cards, spreadType } = tarotReadingSchema.parse(req.body)
 
-    // Celtic cross requires plus tier or higher
-    if (spreadType === 'celtic') {
+    // Spread type entitlement checks
+    if (spreadType === 'three' || spreadType === 'celtic') {
       const userResult = await db.query('SELECT subscription_tier FROM users WHERE id = $1', [userId])
       const tier = userResult.rows[0]?.subscription_tier || 'free'
       if (tier === 'free') {
-        return res.status(403).json({ error: 'Celtic Cross spread requires Plus or Premium subscription', requiredTier: 'plus' })
+        return res.status(403).json({
+          error: `${spreadType === 'celtic' ? 'Celtic Cross' : 'Three Card'} spread requires Plus or Premium subscription`,
+          requiredTier: 'plus',
+        })
       }
     }
 
