@@ -142,6 +142,44 @@ router.get('/journals', async (req: AuthRequest, res: Response) => {
   }
 })
 
+// Get journal statistics (must be before /:journalId to avoid route conflict)
+router.get('/journals/stats', async (req: AuthRequest, res: Response) => {
+  try {
+    const userId = req.userId
+
+    const totalJournals = await db.query(
+      'SELECT COUNT(*) as total FROM journals WHERE user_id = $1',
+      [userId]
+    )
+
+    const journalsByMood = await db.query(
+      `SELECT mood, COUNT(*) as count
+       FROM journals
+       WHERE user_id = $1 AND mood IS NOT NULL
+       GROUP BY mood
+       ORDER BY count DESC`,
+      [userId]
+    )
+
+    const recentJournals = await db.query(
+      `SELECT COUNT(*) as count
+       FROM journals
+       WHERE user_id = $1
+       AND created_at > NOW() - INTERVAL '7 days'`,
+      [userId]
+    )
+
+    res.json({
+      totalJournals: parseInt(totalJournals.rows[0]?.total || '0'),
+      journalsByMood: journalsByMood.rows,
+      recentJournals: parseInt(recentJournals.rows[0]?.count || '0')
+    })
+  } catch (error) {
+    console.error('Get journal stats error:', error)
+    res.status(500).json({ error: 'Failed to get journal stats' })
+  }
+})
+
 // Get single journal
 router.get('/journals/:journalId', async (req: AuthRequest, res: Response) => {
   try {
@@ -280,47 +318,6 @@ router.delete('/journals/:journalId', async (req: AuthRequest, res: Response) =>
   } catch (error) {
     console.error('Delete journal error:', error)
     res.status(500).json({ error: 'Failed to delete journal' })
-  }
-})
-
-// Get journal statistics
-router.get('/journals/stats', async (req: AuthRequest, res: Response) => {
-  try {
-    const userId = req.userId
-
-    // Get total journals
-    const totalJournals = await db.query(
-      'SELECT COUNT(*) as total FROM journals WHERE user_id = $1',
-      [userId]
-    )
-
-    // Get journals by mood
-    const journalsByMood = await db.query(
-      `SELECT mood, COUNT(*) as count
-       FROM journals
-       WHERE user_id = $1 AND mood IS NOT NULL
-       GROUP BY mood
-       ORDER BY count DESC`,
-      [userId]
-    )
-
-    // Get recent journals (last 7 days)
-    const recentJournals = await db.query(
-      `SELECT COUNT(*) as count
-       FROM journals
-       WHERE user_id = $1
-       AND created_at > NOW() - INTERVAL '7 days'`,
-      [userId]
-    )
-
-    res.json({
-      totalJournals: parseInt(totalJournals.rows[0]?.total || '0'),
-      journalsByMood: journalsByMood.rows,
-      recentJournals: parseInt(recentJournals.rows[0]?.count || '0')
-    })
-  } catch (error) {
-    console.error('Get journal stats error:', error)
-    res.status(500).json({ error: 'Failed to get journal stats' })
   }
 })
 

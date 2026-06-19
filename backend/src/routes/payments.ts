@@ -167,98 +167,6 @@ router.post('/create-intent', async (req: AuthRequest, res: Response) => {
   }
 })
 
-// Payment callback (Alipay)
-router.post('/callback/alipay', async (req: Request, res: Response) => {
-  try {
-    // Verify Alipay signature
-    const isValid = verifyAlipaySignature(req.body)
-
-    if (!isValid) {
-      return res.status(400).json({ error: 'Invalid signature' })
-    }
-
-    const { out_trade_no, trade_no, trade_status, total_amount } = req.body
-
-    if (trade_status === 'TRADE_SUCCESS') {
-      // Look up payment by order_id
-      const paymentResult = await db.query(
-        `SELECT id, user_id, plan_id, amount FROM payments
-         WHERE order_id = $1 AND payment_status = 'pending'`,
-        [out_trade_no]
-      )
-
-      if (paymentResult.rows.length === 0) {
-        console.warn('Alipay callback: no pending payment found for order', out_trade_no)
-        return res.json({ success: true })
-      }
-
-      const payment = paymentResult.rows[0]
-
-      // Update payment status with provider transaction ID
-      await db.query(
-        `UPDATE payments
-         SET payment_status = 'completed', provider_transaction_id = $1, updated_at = NOW()
-         WHERE id = $2`,
-        [trade_no, payment.id]
-      )
-
-      // Activate subscription with the correct tier
-      await activateSubscription(payment.user_id, payment.plan_id || 'plus')
-    }
-
-    res.json({ success: true })
-  } catch (error) {
-    console.error('Alipay callback error:', error)
-    res.status(500).json({ error: 'Callback processing failed' })
-  }
-})
-
-// Payment callback (WeChat Pay)
-router.post('/callback/wechat', async (req: Request, res: Response) => {
-  try {
-    // Verify WeChat Pay signature
-    const isValid = verifyWeChatPaySignature(req.body)
-
-    if (!isValid) {
-      return res.status(400).json({ error: 'Invalid signature' })
-    }
-
-    const { out_trade_no, transaction_id, result_code, total_fee } = req.body
-
-    if (result_code === 'SUCCESS') {
-      // Look up payment by order_id
-      const paymentResult = await db.query(
-        `SELECT id, user_id, plan_id, amount FROM payments
-         WHERE order_id = $1 AND payment_status = 'pending'`,
-        [out_trade_no]
-      )
-
-      if (paymentResult.rows.length === 0) {
-        console.warn('WeChat callback: no pending payment found for order', out_trade_no)
-        return res.json({ success: true })
-      }
-
-      const payment = paymentResult.rows[0]
-
-      // Update payment status with provider transaction ID
-      await db.query(
-        `UPDATE payments
-         SET payment_status = 'completed', provider_transaction_id = $1, updated_at = NOW()
-         WHERE id = $2`,
-        [transaction_id, payment.id]
-      )
-
-      // Activate subscription with the correct tier
-      await activateSubscription(payment.user_id, payment.plan_id || 'plus')
-    }
-
-    res.json({ success: true })
-  } catch (error) {
-    console.error('WeChat callback error:', error)
-    res.status(500).json({ error: 'Callback processing failed' })
-  }
-})
-
 // Check payment status
 router.get('/status/:paymentId', async (req: AuthRequest, res: Response) => {
   try {
@@ -399,35 +307,6 @@ function generateWeChatPayUrl(orderId: string, amount: number, body: string): st
 
 function generateNonceStr(): string {
   return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
-}
-
-function verifyAlipaySignature(params: any): boolean {
-  // In production, implement proper signature verification
-  // This is a simplified version for demo
-  return true
-}
-
-function verifyWeChatPaySignature(params: any): boolean {
-  // In production, implement proper signature verification
-  // This is a simplified version for demo
-  return true
-}
-
-async function activateSubscription(userId: string, tier: string) {
-  const startDate = new Date()
-  const endDate = new Date()
-  endDate.setMonth(endDate.getMonth() + 1)
-
-  await db.query(
-    `INSERT INTO subscriptions (user_id, tier, start_date, end_date, is_active, auto_renew)
-     VALUES ($1, $2, $3, $4, true, true)`,
-    [userId, tier, startDate, endDate]
-  )
-
-  await db.query(
-    'UPDATE users SET subscription_tier = $1, updated_at = NOW() WHERE id = $2',
-    [tier, userId]
-  )
 }
 
 export default router

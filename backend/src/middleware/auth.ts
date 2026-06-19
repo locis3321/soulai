@@ -6,6 +6,14 @@ export interface AuthRequest extends Request {
   userEmail?: string
 }
 
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET
+  if (!secret && process.env.NODE_ENV !== 'development') {
+    throw new Error('JWT_SECRET is required in non-development environments')
+  }
+  return secret || 'default_secret'
+}
+
 export function authenticateToken(
   req: AuthRequest,
   res: Response,
@@ -22,7 +30,7 @@ export function authenticateToken(
   try {
     const decoded = jwt.verify(
       token,
-      process.env.JWT_SECRET || 'default_secret'
+      getJwtSecret()
     ) as { userId: string; email: string }
 
     req.userId = decoded.userId
@@ -56,7 +64,7 @@ export function optionalAuth(
   try {
     const decoded = jwt.verify(
       token,
-      process.env.JWT_SECRET || 'default_secret'
+      getJwtSecret()
     ) as { userId: string; email: string }
 
     req.userId = decoded.userId

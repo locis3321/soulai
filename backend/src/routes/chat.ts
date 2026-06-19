@@ -3,6 +3,7 @@ import { AuthRequest } from '../middleware/auth.js'
 import { db } from '../lib/db.js'
 import { generateAIResponse } from '../lib/ai.js'
 import { buildUserContext, formatUserContextForPrompt } from '../lib/userContext.js'
+import { checkUserInputForCrisis, validateAiOutput } from '../lib/safety.js'
 import { z } from 'zod'
 
 const router = Router()
@@ -123,6 +124,17 @@ router.post('/sessions/:sessionId/messages', async (req: AuthRequest, res: Respo
     const userContext = await buildUserContext(userId!)
     const contextPrompt = formatUserContextForPrompt(userContext)
 
+    // Safety: check user input for crisis content
+    const crisisResponse = checkUserInputForCrisis(content, userContext.language)
+    if (crisisResponse) {
+      await db.query(`INSERT INTO chat_messages (session_id, role, content) VALUES ($1, 'user', $2)`, [sessionId, content])
+      const aiMsg = await db.query(
+        `INSERT INTO chat_messages (session_id, role, content) VALUES ($1, 'assistant', $2) RETURNING id, role, content, created_at`,
+        [sessionId, crisisResponse]
+      )
+      return res.json({ userMessage: { role: 'user', content }, aiMessage: aiMsg.rows[0], crisis: true })
+    }
+
     // Get recent messages for context
     const recentMessages = await db.query(
       `SELECT role, content 
@@ -164,12 +176,19 @@ router.post('/sessions/:sessionId/messages', async (req: AuthRequest, res: Respo
       temperature: 0.7
     })
 
+    // Safety: validate AI output
+    const validation = validateAiOutput(aiResponse.content, userContext.language)
+    const finalContent = validation.safe ? aiResponse.content : (validation.replacement || aiResponse.content)
+    if (!validation.safe) {
+      console.warn('AI safety intervention:', validation.issues)
+    }
+
     // Save AI message
     const aiMessage = await db.query(
       `INSERT INTO chat_messages (session_id, role, content)
        VALUES ($1, 'assistant', $2)
        RETURNING id, role, content, created_at`,
-      [sessionId, aiResponse.content]
+      [sessionId, finalContent]
     )
 
     // Update session timestamp

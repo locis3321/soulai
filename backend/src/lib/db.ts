@@ -12,23 +12,23 @@ const pool = new pg.Pool({
   connectionTimeoutMillis: 2000,
 })
 
-// Redis Configuration
-const redisConfig: any = {
-  host: process.env.REDIS_HOST || 'localhost',
-  port: parseInt(process.env.REDIS_PORT || '6379'),
-  maxRetriesPerRequest: 3,
-  retryStrategy(times: number) {
-    const delay = Math.min(times * 50, 2000)
-    return delay
-  },
-}
-
-// Only add password if it exists
-if (process.env.REDIS_PASSWORD) {
-  redisConfig.password = process.env.REDIS_PASSWORD
-}
-
-const redis = new Redis(redisConfig)
+// Redis Configuration - prefer REDIS_URL (Docker), fall back to individual vars
+const redis = process.env.REDIS_URL
+  ? new Redis(process.env.REDIS_URL, {
+      maxRetriesPerRequest: 3,
+      retryStrategy(times: number) {
+        return Math.min(times * 50, 2000)
+      },
+    })
+  : new Redis({
+      host: process.env.REDIS_HOST || 'localhost',
+      port: parseInt(process.env.REDIS_PORT || '6379'),
+      password: process.env.REDIS_PASSWORD || undefined,
+      maxRetriesPerRequest: 3,
+      retryStrategy(times: number) {
+        return Math.min(times * 50, 2000)
+      },
+    })
 
 // Database connection wrapper
 export const db = {

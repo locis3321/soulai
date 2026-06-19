@@ -275,14 +275,14 @@ Include clear disclaimers around AI advisor, tarot, astrology, and paid reports.
 
 If asked to improve the prototype, prioritize:
 
-1. Add proper API client / service layer.
-2. Split `DiscoverView.tsx` into feature modules.
-3. Expand tarot deck to 78 cards.
-4. Add disclaimer components.
+1. ~~Add proper API client / service layer.~~ ✅ Done
+2. ~~Split `DiscoverView.tsx` into feature modules.~~ ✅ Done (851 lines, 5 modules)
+3. Expand tarot deck to 78 cards. ✅ Done (tarotDataComplete.ts)
+4. Add disclaimer components. ✅ Done (Disclaimer.tsx)
 5. Move translations into modular i18n files.
-6. Replace localStorage-only premium state with backend-ready entitlement model.
+6. Replace localStorage-only premium state with backend-ready entitlement model. ✅ Done (subscription.ts)
 7. Add analytics events for onboarding, daily insight, tarot, chat, paywall, and purchase.
-8. Add real deterministic PoC for `iztro` and/or astrology calculations.
+8. ~~Add real deterministic PoC for `iztro` and/or astrology calculations.~~ ✅ Done (iztro, swisseph, lunar-javascript)
 
 ## Recommended Internal Modules
 
@@ -402,21 +402,28 @@ All Phase 1 tasks are implemented and verified:
 8. ✅ Healing journal and mood tracking (CRUD + stats)
 9. ✅ Payment integration (Alipay/WeChat Pay with order metadata)
 10. ✅ Subscription management UI (tier comparison, payment flow, cancel)
+11. ✅ Paywall modal for premium feature gating (Celtic Cross tarot)
+12. ✅ DiscoverView component splitting (1300+ → 851 lines, 5 extracted modules)
 
-**New modules added:**
-- `components/PaywallModal.tsx` - Premium feature gating
-- `components/SubscriptionPage.tsx` - Subscription management
-- `components/discover/AstrologyModule.tsx` - Extracted astrology module
-- `components/discover/BaZiModule.tsx` - Extracted BaZi module
-- `components/discover/ZiWeiModule.tsx` - Extracted ZiWei module
-- `components/discover/NumerologyModule.tsx` - Extracted numerology module
+**New frontend modules:**
+- `components/PaywallModal.tsx` (90 lines) - Premium feature gating modal
+- `components/SubscriptionPage.tsx` (145 lines) - Subscription management with payment
+- `components/discover/AstrologyModule.tsx` (137 lines) - Natal chart + compatibility
+- `components/discover/BaZiModule.tsx` (119 lines) - Four pillars + luck cycle
+- `components/discover/ZiWeiModule.tsx` (113 lines) - Twelve palaces grid
+- `components/discover/NumerologyModule.tsx` (85 lines) - Life path number
+- `components/discover/TarotModule.tsx` (209 lines) - Tarot with React Query (prior session)
+
+**New backend modules:**
 - `backend/src/services/astrology.ts` - swisseph natal chart calculation
 - `backend/src/services/bazi.ts` - lunar-javascript BaZi calculation
 - `backend/src/services/ziwei.ts` - iztro Zi Wei calculation
 - `backend/src/routes/bazi.ts`, `numerology.ts`, `ziwei.ts` - API routes
 - `backend/src/types/lunar-javascript.d.ts` - TypeScript declarations
 
-**E2e tests:** 8 Playwright tests passing (chromium). Auth, navigation, API routes, BaZi calculate button, tarot API, healing API, console errors.
+**E2e tests:** 8 Playwright tests passing (chromium, 14s). Auth, navigation, API routes, BaZi calculate button, tarot API, healing API, console errors.
+
+**Lint + build:** Both frontend and backend pass `npm run lint` and `npm run build`.
 
 ### Remaining Work (Not MVP-Blocking)
 

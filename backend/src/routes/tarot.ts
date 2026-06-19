@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express'
 import { AuthRequest } from '../middleware/auth.js'
+import { requireTier } from '../middleware/entitlement.js'
 import { db } from '../lib/db.js'
 import { generateDivinationReading } from '../lib/ai.js'
 import { buildUserContext, formatUserContextForPrompt } from '../lib/userContext.js'
@@ -43,6 +44,15 @@ router.post('/reading', async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.userId
     const { question, cards, spreadType } = tarotReadingSchema.parse(req.body)
+
+    // Celtic cross requires plus tier or higher
+    if (spreadType === 'celtic') {
+      const userResult = await db.query('SELECT subscription_tier FROM users WHERE id = $1', [userId])
+      const tier = userResult.rows[0]?.subscription_tier || 'free'
+      if (tier === 'free') {
+        return res.status(403).json({ error: 'Celtic Cross spread requires Plus or Premium subscription', requiredTier: 'plus' })
+      }
+    }
 
     // Build user context for AI
     const userContext = await buildUserContext(userId!)

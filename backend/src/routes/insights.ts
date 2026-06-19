@@ -3,6 +3,7 @@ import { AuthRequest } from '../middleware/auth.js'
 import { db } from '../lib/db.js'
 import { generateDailyInsight } from '../lib/ai.js'
 import { buildUserContext, formatUserContextForPrompt } from '../lib/userContext.js'
+import { validateAiOutput } from '../lib/safety.js'
 
 const router = Router()
 
@@ -22,9 +23,15 @@ router.post('/daily', async (req: AuthRequest, res: Response) => {
       lang || userContext.language
     )
 
+    // Safety: validate AI output
+    const validation = validateAiOutput(insight.message, lang || userContext.language)
+    if (!validation.safe) {
+      console.warn('Insight safety intervention:', validation.issues)
+    }
+
     res.json({
       energy: insight.energy,
-      dailyMessage: insight.message
+      dailyMessage: validation.safe ? insight.message : 'Today brings new opportunities for growth and reflection.'
     })
   } catch (error) {
     console.error('Daily insight error:', error)

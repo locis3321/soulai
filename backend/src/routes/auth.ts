@@ -6,6 +6,14 @@ import { z } from 'zod'
 
 const router = Router()
 
+function getJwtSecret(): string {
+  const secret = process.env.JWT_SECRET
+  if (!secret && process.env.NODE_ENV !== 'development') {
+    throw new Error('JWT_SECRET is required in non-development environments')
+  }
+  return secret || 'default_secret'
+}
+
 // Validation schemas
 const registerSchema = z.object({
   email: z.string().email(),
@@ -50,7 +58,7 @@ router.post('/register', async (req: Request, res: Response) => {
     // Generate JWT
     const token = jwt.sign(
       { userId: user.id, email: user.email },
-      process.env.JWT_SECRET || 'default_secret',
+      getJwtSecret(),
       { expiresIn: (process.env.JWT_EXPIRES_IN || '7d') as jwt.SignOptions['expiresIn'] }
     )
 
@@ -100,7 +108,7 @@ router.post('/login', async (req: Request, res: Response) => {
     // Generate JWT
     const token = jwt.sign(
       { userId: user.id, email: user.email },
-      process.env.JWT_SECRET || 'default_secret',
+      getJwtSecret(),
       { expiresIn: (process.env.JWT_EXPIRES_IN || '7d') as jwt.SignOptions['expiresIn'] }
     )
 
@@ -184,7 +192,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
     // Generate new token
     const newToken = jwt.sign(
       { userId: decoded.userId },
-      process.env.JWT_SECRET || 'default_secret',
+      getJwtSecret(),
       { expiresIn: (process.env.JWT_EXPIRES_IN || '7d') as jwt.SignOptions['expiresIn'] }
     )
 

@@ -231,7 +231,23 @@ export default function App() {
                 <Navigate to="/" replace />
               ) : (
                 <OnboardingView 
-                  onComplete={() => setHasOnboarded(true)} 
+                  onComplete={async (profile) => {
+                    setHasOnboarded(true)
+                    // Save birth profile to backend
+                    try {
+                      await api.updateProfile({
+                        name: profile.name,
+                        birthDate: profile.birthDate,
+                        birthTime: profile.birthTime,
+                        birthPlace: profile.birthPlace,
+                      })
+                      // Refresh user data
+                      const meData = await api.getMe()
+                      if (meData.user) setUser(meData.user)
+                    } catch (e) {
+                      console.error('Failed to save onboarding profile:', e)
+                    }
+                  }} 
                 />
               )
             }

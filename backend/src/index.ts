@@ -18,6 +18,7 @@ import ziweiRoutes from './routes/ziwei.js'
 import chatRoutes from './routes/chat.js'
 import healingRoutes from './routes/healing.js'
 import paymentRoutes from './routes/payments.js'
+import paymentCallbackRoutes from './routes/payments-callback.js'
 import memoryRoutes from './routes/memory.js'
 import healthRoutes from './routes/health.js'
 
@@ -67,7 +68,7 @@ app.use('/api/numerology', authenticateToken, numerologyRoutes)
 app.use('/api/ziwei', authenticateToken, ziweiRoutes)
 app.use('/api/chat', authenticateToken, chatRoutes)
 app.use('/api/healing', authenticateToken, healingRoutes)
-app.use('/api/payments/callback', paymentRoutes) // Payment callbacks (no auth - providers call these)
+app.use('/api/payments/callback', paymentCallbackRoutes) // No auth - payment providers call these
 app.use('/api/payments', authenticateToken, paymentRoutes)
 app.use('/api/memory', authenticateToken, memoryRoutes)
 
