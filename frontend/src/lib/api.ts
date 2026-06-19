@@ -231,8 +231,8 @@ export const api = {
     return response.data
   },
 
-  async createPaymentIntent(planId: string, paymentMethod: 'alipay' | 'wechat') {
-    const response = await apiClient.post('/payments/create-intent', { planId, paymentMethod })
+  async createPaymentIntent(planId: string, paymentMethod: 'alipay' | 'wechat', period: 'monthly' | 'yearly' = 'monthly') {
+    const response = await apiClient.post('/payments/create-intent', { planId, paymentMethod, period })
     return response.data
   },
 

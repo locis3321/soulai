@@ -274,10 +274,11 @@ export function useCreatePaymentIntent() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ planId, paymentMethod }: {
+    mutationFn: ({ planId, paymentMethod, period }: {
       planId: string
       paymentMethod: 'alipay' | 'wechat'
-    }) => api.createPaymentIntent(planId, paymentMethod),
+      period?: 'monthly' | 'yearly'
+    }) => api.createPaymentIntent(planId, paymentMethod, period),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['subscription'] })
     },

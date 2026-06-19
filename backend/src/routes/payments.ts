@@ -1,40 +1,10 @@
 import { Router, Request, Response } from 'express'
 import { AuthRequest } from '../middleware/auth.js'
 import { db } from '../lib/db.js'
+import crypto from 'crypto'
 import { z } from 'zod'
 
 const router = Router()
-
-// Validation schemas
-const createPaymentSchema = z.object({
-  amount: z.number().positive(),
-  currency: z.enum(['CNY', 'USD']).default('CNY'),
-  paymentMethod: z.enum(['alipay', 'wechat']),
-  description: z.string().max(500),
-  productId: z.string().optional()
-})
-
-const createSubscriptionSchema = z.object({
-  tier: z.enum(['plus', 'premium']),
-  paymentMethod: z.enum(['alipay', 'wechat']),
-  period: z.enum(['monthly', 'yearly'])
-})
-
-// Payment configuration
-const PAYMENT_CONFIG = {
-  alipay: {
-    appId: process.env.ALIPAY_APP_ID || 'your_alipay_app_id',
-    privateKey: process.env.ALIPAY_PRIVATE_KEY || 'your_alipay_private_key',
-    gateway: 'https://openapi.alipay.com/gateway.do',
-    notifyUrl: process.env.ALIPAY_NOTIFY_URL || 'http://localhost:4000/api/payments/alipay/notify'
-  },
-  wechat: {
-    appId: process.env.WECHAT_APP_ID || 'your_wechat_app_id',
-    mchId: process.env.WECHAT_MCH_ID || 'your_wechat_mch_id',
-    apiKey: process.env.WECHAT_API_KEY || 'your_wechat_api_key',
-    notifyUrl: process.env.WECHAT_NOTIFY_URL || 'http://localhost:4000/api/payments/wechat/notify'
-  }
-}
 
 // Subscription pricing
 const SUBSCRIPTION_PRICES = {
@@ -48,51 +18,34 @@ const SUBSCRIPTION_PRICES = {
   }
 } as const
 
+type PlanId = keyof typeof SUBSCRIPTION_PRICES
+type Period = 'monthly' | 'yearly'
+
 // Get subscription plans
-router.get('/plans', async (req: Request, res: Response) => {
+router.get('/plans', async (_req: Request, res: Response) => {
   try {
     res.json({
       plans: [
         {
           id: 'free',
           name: 'Free',
-          price: 0,
-          currency: 'CNY',
-          features: [
-            '每日洞察',
-            '5次AI聊天',
-            '单牌塔罗',
-            '基础星盘',
-            '情绪记录'
-          ]
+          monthly: { amount: 0, currency: 'CNY' },
+          yearly: { amount: 0, currency: 'CNY' },
+          features: ['每日洞察', '5次AI聊天', '单牌塔罗', '基础星盘', '情绪记录']
         },
         {
           id: 'plus',
           name: 'Plus',
-          price: SUBSCRIPTION_PRICES.plus.monthly,
-          currency: 'CNY',
-          features: [
-            '50次AI聊天',
-            '三牌塔罗',
-            '详细星盘',
-            '每周报告',
-            '情绪趋势',
-            '无广告'
-          ]
+          monthly: SUBSCRIPTION_PRICES.plus.monthly,
+          yearly: SUBSCRIPTION_PRICES.plus.yearly,
+          features: ['50次AI聊天', '三牌塔罗', '详细星盘', '每周报告', '情绪趋势', '无广告']
         },
         {
           id: 'premium',
           name: 'Premium',
-          price: SUBSCRIPTION_PRICES.premium.monthly.amount,
-          currency: 'CNY',
-          features: [
-            '无限AI聊天',
-            '凯尔特十字塔罗',
-            '深度报告',
-            '月度/年度报告',
-            '关系匹配',
-            '优先支持'
-          ]
+          monthly: SUBSCRIPTION_PRICES.premium.monthly,
+          yearly: SUBSCRIPTION_PRICES.premium.yearly,
+          features: ['无限AI聊天', '凯尔特十字塔罗', '深度报告', '月度/年度报告', '关系匹配', '优先支持']
         }
       ]
     })
@@ -106,11 +59,16 @@ router.get('/plans', async (req: Request, res: Response) => {
 router.post('/create-intent', async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.userId
-    const { planId, paymentMethod } = req.body
+    const { planId, paymentMethod, period = 'monthly' } = req.body
 
     // Validate plan
     if (!['plus', 'premium'].includes(planId)) {
-      return res.status(400).json({ error: 'Invalid plan' })
+      return res.status(400).json({ error: 'Invalid plan. Must be "plus" or "premium".' })
+    }
+
+    // Validate period
+    if (!['monthly', 'yearly'].includes(period)) {
+      return res.status(400).json({ error: 'Invalid period. Must be "monthly" or "yearly".' })
     }
 
     // Validate payment method
@@ -118,21 +76,21 @@ router.post('/create-intent', async (req: AuthRequest, res: Response) => {
       return res.status(400).json({ error: 'Invalid payment method. Use alipay or wechat.' })
     }
 
-    const priceConfig = SUBSCRIPTION_PRICES[planId as keyof typeof SUBSCRIPTION_PRICES]?.monthly
-    if (!priceConfig) {
-      return res.status(400).json({ error: 'Invalid plan' })
-    }
+    const priceConfig = SUBSCRIPTION_PRICES[planId as PlanId][period as Period]
     const { amount, currency } = priceConfig
 
-    // Generate order ID
+    // Generate order ID with period encoded
     const orderId = `SOULAI_${Date.now()}_${userId?.substring(0, 8)}`
+
+    // Store plan_id with period (e.g., "plus_monthly", "premium_yearly")
+    const fullPlanId = `${planId}_${period}`
 
     // Create payment record
     const paymentResult = await db.query(
-      `INSERT INTO payments (user_id, order_id, plan_id, amount, currency, payment_method, payment_status, description)
-       VALUES ($1, $2, $3, $4, $5, $6, 'pending', $7)
-       RETURNING id, amount, currency, payment_status, created_at`,
-      [userId, orderId, planId, amount, currency, paymentMethod, `SoulAI ${planId} subscription`]
+      `INSERT INTO payments (user_id, order_id, plan_id, period, amount, currency, payment_method, payment_status, description)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending', $8)
+       RETURNING id, order_id, amount, currency, payment_status, created_at`,
+      [userId, orderId, fullPlanId, period, amount, currency, paymentMethod, `SoulAI ${planId} ${period} subscription`]
     )
 
     const payment = paymentResult.rows[0]
@@ -142,21 +100,21 @@ router.post('/create-intent', async (req: AuthRequest, res: Response) => {
     let qrCode = ''
 
     if (paymentMethod === 'alipay') {
-      // Alipay integration
-      paymentUrl = generateAlipayUrl(orderId, amount, `SoulAI ${planId} 订阅`)
+      paymentUrl = generateAlipayUrl(orderId, amount, `SoulAI ${planId} ${period}`)
       qrCode = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(paymentUrl)}`
     } else if (paymentMethod === 'wechat') {
-      // WeChat Pay integration
-      paymentUrl = generateWeChatPayUrl(orderId, amount, `SoulAI ${planId} 订阅`)
+      paymentUrl = generateWeChatPayUrl(orderId, amount, `SoulAI ${planId} ${period}`)
       qrCode = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(paymentUrl)}`
     }
 
     res.json({
       paymentId: payment.id,
-      orderId,
+      orderId: payment.order_id,
+      planId: fullPlanId,
       amount: payment.amount,
       currency: payment.currency,
       paymentMethod,
+      period,
       paymentUrl,
       qrCode,
       status: payment.payment_status
@@ -167,24 +125,39 @@ router.post('/create-intent', async (req: AuthRequest, res: Response) => {
   }
 })
 
-// Check payment status
-router.get('/status/:paymentId', async (req: AuthRequest, res: Response) => {
+// Check payment status (supports polling)
+router.get('/status/:orderId', async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.userId
-    const { paymentId } = req.params
+    const { orderId } = req.params
 
     const result = await db.query(
-      `SELECT id, amount, currency, payment_method, payment_status, created_at
+      `SELECT id, order_id, plan_id, amount, currency, payment_method, payment_status, created_at
        FROM payments
-       WHERE id = $1 AND user_id = $2`,
-      [paymentId, userId]
+       WHERE order_id = $1 AND user_id = $2`,
+      [orderId, userId]
     )
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'Payment not found' })
     }
 
-    res.json({ payment: result.rows[0] })
+    const payment = result.rows[0]
+
+    // If completed, also return subscription info
+    let subscription = null
+    if (payment.payment_status === 'completed') {
+      const subResult = await db.query(
+        `SELECT id, tier, start_date, end_date, is_active FROM subscriptions
+         WHERE user_id = $1 AND is_active = true ORDER BY created_at DESC LIMIT 1`,
+        [userId]
+      )
+      if (subResult.rows.length > 0) {
+        subscription = subResult.rows[0]
+      }
+    }
+
+    res.json({ payment, subscription })
   } catch (error) {
     console.error('Check payment status error:', error)
     res.status(500).json({ error: 'Failed to check payment status' })
@@ -239,19 +212,13 @@ router.post('/subscription/cancel', async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.userId
 
-    // Deactivate current subscription
     await db.query(
-      `UPDATE subscriptions 
-       SET is_active = false, auto_renew = false, updated_at = NOW()
-       WHERE user_id = $1 AND is_active = true`,
+      `UPDATE subscriptions SET is_active = false, auto_renew = false, updated_at = NOW() WHERE user_id = $1 AND is_active = true`,
       [userId]
     )
 
-    // Update user tier
     await db.query(
-      `UPDATE users 
-       SET subscription_tier = 'free', updated_at = NOW()
-       WHERE id = $1`,
+      `UPDATE users SET subscription_tier = 'free', updated_at = NOW() WHERE id = $1`,
       [userId]
     )
 
@@ -262,37 +229,62 @@ router.post('/subscription/cancel', async (req: AuthRequest, res: Response) => {
   }
 })
 
-// Helper functions for payment integration
+// ─── Payment URL Generation ──────────────────────────────────────────────
 
 function generateAlipayUrl(orderId: string, amount: number, subject: string): string {
-  // In production, use Alipay SDK
-  // This is a simplified version for demo
-  const params = new URLSearchParams({
-    app_id: process.env.ALIPAY_APP_ID || 'demo_app_id',
+  const timestamp = new Date().toISOString().replace('T', ' ').substring(0, 19)
+  const notifyUrl = process.env.ALIPAY_NOTIFY_URL || 'http://localhost:4000/api/payments/callback/alipay'
+  const returnUrl = process.env.ALIPAY_RETURN_URL || 'http://localhost:3000/payment/success'
+
+  const bizContent = JSON.stringify({
+    out_trade_no: orderId,
+    total_amount: amount.toFixed(2),
+    subject: subject,
+    product_code: 'FAST_INSTANT_TRADE_PAY'
+  })
+
+  // Common params
+  const params: Record<string, string> = {
+    app_id: process.env.ALIPAY_APP_ID || '',
     method: 'alipay.trade.page.pay',
     charset: 'utf-8',
     sign_type: 'RSA2',
-    timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
+    timestamp: timestamp,
     version: '1.0',
-    notify_url: process.env.ALIPAY_NOTIFY_URL || 'http://localhost:4000/api/payments/callback/alipay',
-    return_url: process.env.ALIPAY_RETURN_URL || 'http://localhost:3000/payment/success',
-    biz_content: JSON.stringify({
-      out_trade_no: orderId,
-      total_amount: amount.toFixed(2),
-      subject: subject,
-      product_code: 'FAST_INSTANT_TRADE_PAY'
-    })
-  })
+    notify_url: notifyUrl,
+    return_url: returnUrl,
+    biz_content: bizContent
+  }
 
-  return `https://openapi.alipay.com/gateway.do?${params.toString()}`
+  // In development, return a mock URL
+  if (process.env.NODE_ENV === 'development' && !process.env.ALIPAY_PRIVATE_KEY) {
+    return `https://openapi.alipay.com/gateway.do?${new URLSearchParams(params).toString()}`
+  }
+
+  // Production: sign the request
+  const privateKey = process.env.ALIPAY_PRIVATE_KEY
+  if (privateKey) {
+    const signContent = Object.keys(params)
+      .sort()
+      .map(k => `${k}=${params[k]}`)
+      .join('&')
+
+    const pemKey = privateKey.includes('-----BEGIN')
+      ? privateKey
+      : `-----BEGIN RSA PRIVATE KEY-----\n${privateKey}\n-----END RSA PRIVATE KEY-----`
+
+    const sign = crypto.createSign('RSA-SHA256')
+    sign.update(signContent, 'utf8')
+    params.sign = sign.sign(pemKey, 'base64')
+  }
+
+  return `https://openapi.alipay.com/gateway.do?${new URLSearchParams(params).toString()}`
 }
 
 function generateWeChatPayUrl(orderId: string, amount: number, body: string): string {
-  // In production, use WeChat Pay SDK
-  // This is a simplified version for demo
-  const params = new URLSearchParams({
-    appid: process.env.WECHAT_APP_ID || 'demo_app_id',
-    mch_id: process.env.WECHAT_MCH_ID || 'demo_mch_id',
+  const params: Record<string, string> = {
+    appid: process.env.WECHAT_APP_ID || '',
+    mch_id: process.env.WECHAT_MCH_ID || '',
     nonce_str: generateNonceStr(),
     body: body,
     out_trade_no: orderId,
@@ -300,13 +292,29 @@ function generateWeChatPayUrl(orderId: string, amount: number, body: string): st
     spbill_create_ip: '127.0.0.1',
     notify_url: process.env.WECHAT_NOTIFY_URL || 'http://localhost:4000/api/payments/callback/wechat',
     trade_type: 'NATIVE'
-  })
+  }
 
-  return `https://api.mch.weixin.qq.com/pay/unifiedorder?${params.toString()}`
+  // In development, return a mock URL
+  if (process.env.NODE_ENV === 'development' && !process.env.WECHAT_API_KEY) {
+    return `https://api.mch.weixin.qq.com/pay/unifiedorder?${new URLSearchParams(params).toString()}`
+  }
+
+  // Production: sign the request
+  const apiKey = process.env.WECHAT_API_KEY
+  if (apiKey) {
+    const signContent = Object.keys(params)
+      .sort()
+      .map(k => `${k}=${params[k]}`)
+      .join('&') + `&key=${apiKey}`
+
+    params.sign = crypto.createHash('md5').update(signContent, 'utf8').digest('hex').toUpperCase()
+  }
+
+  return `https://api.mch.weixin.qq.com/pay/unifiedorder?${new URLSearchParams(params).toString()}`
 }
 
 function generateNonceStr(): string {
-  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+  return crypto.randomBytes(16).toString('hex')
 }
 
 export default router

@@ -191,12 +191,12 @@ export const SUBSCRIPTION_PRICES = {
     yearly: 0
   },
   plus: {
-    monthly: 4.99,
-    yearly: 49.99
+    monthly: 34.9,
+    yearly: 349
   },
   premium: {
-    monthly: 9.99,
-    yearly: 99.99
+    monthly: 69.9,
+    yearly: 699
   }
 };
 

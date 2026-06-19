@@ -28,7 +28,7 @@ export default function SubscriptionPage() {
 
   const handleSubscribe = async (tier: SubscriptionTier, method: 'alipay' | 'wechat') => {
     try {
-      await createPayment.mutateAsync({ planId: tier, paymentMethod: method })
+      await createPayment.mutateAsync({ planId: tier, paymentMethod: method, period: selectedPeriod })
       toast.success('Payment initiated! Complete in your payment app.')
       setShowPayment(null)
     } catch (err) {
