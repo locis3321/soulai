@@ -19,6 +19,8 @@ import MarketplaceView from './components/MarketplaceView'
 import Navigation from './components/Navigation'
 import LoginPage from './components/LoginPage'
 import RegisterPage from './components/RegisterPage'
+import PaymentSuccessPage from './components/PaymentSuccessPage'
+import DeepLinkHandler from './components/DeepLinkHandler'
 
 // Create query client
 const queryClient = new QueryClient({
@@ -255,6 +257,38 @@ export default function App() {
                   }} 
                 />
               )
+            }
+          />
+
+          {/* Deep link routes - set active tab and render app */}
+          <Route
+            path="/discover/:module"
+            element={
+              <ProtectedRoute>
+                <DeepLinkHandler targetTab="discover">
+                  <AppLayout />
+                </DeepLinkHandler>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile/subscription"
+            element={
+              <ProtectedRoute>
+                <DeepLinkHandler targetTab="profile">
+                  <AppLayout />
+                </DeepLinkHandler>
+              </ProtectedRoute>
+            }
+          />
+
+          {/* Payment success callback */}
+          <Route
+            path="/payment/success"
+            element={
+              <ProtectedRoute>
+                <PaymentSuccessPage />
+              </ProtectedRoute>
             }
           />
 

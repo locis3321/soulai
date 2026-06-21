@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, Suspense } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Sparkles, Eye, Command, Plus, Shuffle, Send, ChevronRight, HelpCircle, Loader2, Coins, ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -9,10 +9,12 @@ import { useStore } from "../lib/store";
 import { hasFeatureAccess, SubscriptionTier } from "../lib/subscription";
 import FlippableTarotCard from "./FlippableTarotCard";
 import PaywallModal from "./PaywallModal";
-import AstrologyModule from "./discover/AstrologyModule";
-import BaZiModule from "./discover/BaZiModule";
-import ZiWeiModule from "./discover/ZiWeiModule";
-import NumerologyModule from "./discover/NumerologyModule";
+
+// Lazy-loaded discovery modules for code splitting
+const AstrologyModule = React.lazy(() => import("./discover/AstrologyModule"));
+const BaZiModule = React.lazy(() => import("./discover/BaZiModule"));
+const ZiWeiModule = React.lazy(() => import("./discover/ZiWeiModule"));
+const NumerologyModule = React.lazy(() => import("./discover/NumerologyModule"));
 
 interface DiscoverViewProps {
   profile: UserProfile;
@@ -722,17 +724,23 @@ export default function DiscoverView({ profile, isPremium, onNavigate, largeText
 
           {/* 2. Western Astrology Module */}
           {activeCategory === "astrology" && (
-            <AstrologyModule profile={profile} />
+            <Suspense fallback={<div className="p-8 text-center"><Loader2 className="h-6 w-6 text-glow animate-spin mx-auto" /></div>}>
+              <AstrologyModule profile={profile} />
+            </Suspense>
           )}
 
           {/* 3. BAZI (8 CHARACTERS) MODULE */}
           {activeCategory === "bazi" && (
-            <BaZiModule profile={profile} />
+            <Suspense fallback={<div className="p-8 text-center"><Loader2 className="h-6 w-6 text-glow animate-spin mx-auto" /></div>}>
+              <BaZiModule profile={profile} />
+            </Suspense>
           )}
 
           {/* 4. ZI WEI DOU SHU MODULE */}
           {activeCategory === "ziwei" && (
-            <ZiWeiModule profile={profile} />
+            <Suspense fallback={<div className="p-8 text-center"><Loader2 className="h-6 w-6 text-glow animate-spin mx-auto" /></div>}>
+              <ZiWeiModule profile={profile} />
+            </Suspense>
           )}
 
           {/* 5. I CHING MODULE (stays inline - simple random generation) */}
@@ -826,7 +834,9 @@ export default function DiscoverView({ profile, isPremium, onNavigate, largeText
 
           {/* 7. NUMEROLOGY MODULE */}
           {activeCategory === "numerology" && (
-            <NumerologyModule profile={profile} />
+            <Suspense fallback={<div className="p-8 text-center"><Loader2 className="h-6 w-6 text-glow animate-spin mx-auto" /></div>}>
+              <NumerologyModule profile={profile} />
+            </Suspense>
           )}
         </AnimatePresence>
       </div>
