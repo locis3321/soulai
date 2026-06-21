@@ -1,4 +1,6 @@
-// Subscription and entitlement system for SoulAI
+// Subscription and entitlement display for SoulAI
+// NOTE: The backend (middleware/entitlement.ts) is the source of truth for access control.
+// This file is for UI display purposes only. Do not use as security boundary.
 
 export type SubscriptionTier = "free" | "plus" | "premium";
 

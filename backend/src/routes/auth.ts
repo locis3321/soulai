@@ -19,7 +19,7 @@ const registerSchema = z.object({
   email: z.string().email(),
   password: z.string().min(8),
   name: z.string().min(2),
-  language: z.enum(['en', 'zh', 'vi', 'th']).optional(),
+  language: z.enum(['en', 'zh', 'vi', 'th', 'my']).optional(),
 })
 
 const loginSchema = z.object({

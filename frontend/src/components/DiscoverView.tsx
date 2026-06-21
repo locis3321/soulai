@@ -842,8 +842,7 @@ export default function DiscoverView({ profile, isPremium, onNavigate, largeText
         currentTier={currentTier}
         onSubscribe={(tier) => {
           setPaywallFeature(null)
-          // Navigate to profile subscription page
-          window.dispatchEvent(new CustomEvent('navigate', { detail: 'profile' }))
+          onNavigate('profile')
         }}
       />
     </div>
