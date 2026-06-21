@@ -256,14 +256,11 @@ function generateAlipayUrl(orderId: string, amount: number, subject: string): st
     biz_content: bizContent
   }
 
-  // In development, return a mock URL
-  if (process.env.NODE_ENV === 'development' && !process.env.ALIPAY_PRIVATE_KEY) {
-    return `https://openapi.alipay.com/gateway.do?${new URLSearchParams(params).toString()}`
-  }
-
-  // Production: sign the request
+  // Skip signing in development or when using placeholder keys
   const privateKey = process.env.ALIPAY_PRIVATE_KEY
-  if (privateKey) {
+  const isRealKey = privateKey && !privateKey.startsWith('your_') && privateKey.length > 50
+
+  if (isRealKey) {
     const signContent = Object.keys(params)
       .sort()
       .map(k => `${k}=${params[k]}`)
@@ -294,14 +291,11 @@ function generateWeChatPayUrl(orderId: string, amount: number, body: string): st
     trade_type: 'NATIVE'
   }
 
-  // In development, return a mock URL
-  if (process.env.NODE_ENV === 'development' && !process.env.WECHAT_API_KEY) {
-    return `https://api.mch.weixin.qq.com/pay/unifiedorder?${new URLSearchParams(params).toString()}`
-  }
-
-  // Production: sign the request
+  // Skip signing in development or when using placeholder keys
   const apiKey = process.env.WECHAT_API_KEY
-  if (apiKey) {
+  const isRealKey = apiKey && !apiKey.startsWith('your_') && apiKey.length > 10
+
+  if (isRealKey) {
     const signContent = Object.keys(params)
       .sort()
       .map(k => `${k}=${params[k]}`)

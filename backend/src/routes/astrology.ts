@@ -1,6 +1,6 @@
 import { Router, Response } from 'express'
 import { AuthRequest } from '../middleware/auth.js'
-import { generateDivinationReading } from '../lib/ai.js'
+import { generateSafeDivinationReading } from '../lib/ai.js'
 import { buildUserContext, formatUserContextForPrompt } from '../lib/userContext.js'
 import { db } from '../lib/db.js'
 import { calculateNatalChart, BirthInput } from '../services/astrology.js'
@@ -27,7 +27,7 @@ router.post('/natal-chart', async (req: AuthRequest, res: Response) => {
 
     const natalChart = calculateNatalChart(input as BirthInput)
 
-    const reading = await generateDivinationReading({
+    const { reading } = await generateSafeDivinationReading({
       divinationType: 'astrology',
       divinationData: {
         sunSign: natalChart.sunSign,

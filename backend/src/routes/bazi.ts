@@ -1,6 +1,6 @@
 import { Router, Response } from 'express'
 import { AuthRequest } from '../middleware/auth.js'
-import { generateDivinationReading } from '../lib/ai.js'
+import { generateSafeDivinationReading } from '../lib/ai.js'
 import { buildUserContext, formatUserContextForPrompt } from '../lib/userContext.js'
 import { db } from '../lib/db.js'
 import { calculateBaZi } from '../services/bazi.js'
@@ -24,7 +24,7 @@ router.post('/calculate', async (req: AuthRequest, res: Response) => {
 
     const baziData = calculateBaZi({ birthDate, birthTime })
 
-    const reading = await generateDivinationReading({
+    const { reading } = await generateSafeDivinationReading({
       divinationType: 'bazi',
       divinationData: baziData,
       userContext: contextPrompt,

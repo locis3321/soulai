@@ -1,6 +1,6 @@
 import { Router, Response } from 'express'
 import { AuthRequest } from '../middleware/auth.js'
-import { generateDivinationReading } from '../lib/ai.js'
+import { generateSafeDivinationReading } from '../lib/ai.js'
 import { buildUserContext, formatUserContextForPrompt } from '../lib/userContext.js'
 import { db } from '../lib/db.js'
 import { z } from 'zod'
@@ -31,7 +31,7 @@ router.post('/calculate', async (req: AuthRequest, res: Response) => {
       note: 'Life path number is calculated deterministically from birth date. Other numerology aspects (destiny, soul urge) require the full name.'
     }
 
-    const reading = await generateDivinationReading({
+    const { reading } = await generateSafeDivinationReading({
       divinationType: 'numerology',
       divinationData: numerologyData,
       userContext: contextPrompt,

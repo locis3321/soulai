@@ -1,6 +1,6 @@
 import { Router, Response } from 'express'
 import { AuthRequest } from '../middleware/auth.js'
-import { generateDivinationReading } from '../lib/ai.js'
+import { generateSafeDivinationReading } from '../lib/ai.js'
 import { buildUserContext, formatUserContextForPrompt } from '../lib/userContext.js'
 import { db } from '../lib/db.js'
 import { calculateZiWei } from '../services/ziwei.js'
@@ -25,7 +25,7 @@ router.post('/calculate', async (req: AuthRequest, res: Response) => {
 
     const ziweiData = calculateZiWei({ birthDate, birthTime, gender })
 
-    const reading = await generateDivinationReading({
+    const { reading } = await generateSafeDivinationReading({
       divinationType: 'ziwei',
       divinationData: ziweiData,
       userContext: contextPrompt,

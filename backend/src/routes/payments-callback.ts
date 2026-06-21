@@ -16,8 +16,8 @@ const router = Router()
 function verifyAlipaySignature(params: Record<string, string>): boolean {
   const env = process.env.NODE_ENV
 
-  // In development without real keys, skip verification
-  if (env === 'development' && !process.env.ALIPAY_PUBLIC_KEY) {
+  // In development/test without real keys, skip verification
+  if ((env === 'development' || env === 'test') && !process.env.ALIPAY_PUBLIC_KEY) {
     return true
   }
 
@@ -67,8 +67,8 @@ function verifyAlipaySignature(params: Record<string, string>): boolean {
 function verifyWeChatPaySignature(params: Record<string, string>): boolean {
   const env = process.env.NODE_ENV
 
-  // In development without real keys, skip verification
-  if (env === 'development' && !process.env.WECHAT_API_KEY) {
+  // In development/test without real keys, skip verification
+  if ((env === 'development' || env === 'test') && !process.env.WECHAT_API_KEY) {
     return true
   }
 

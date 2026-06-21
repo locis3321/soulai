@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { validateAiOutput, checkUserInputForCrisis } from './safety.js'
 
 // MiniMax-M3 API configuration
 const MINIMAX_API_URL = process.env.MINIMAX_API_URL || 'https://api.office.demo.healthan.com.cn:7443/v1'
@@ -289,6 +290,36 @@ ${userContext}
     console.error('Divination reading error:', error)
     return '占卜解读服务暂时不可用，请稍后再试。'
   }
+}
+
+// Wrapper with safety validation
+export async function generateSafeDivinationReading(request: {
+  divinationType: 'tarot' | 'astrology' | 'bazi' | 'ziwei' | 'iching' | 'liuyao' | 'numerology'
+  divinationData: any
+  userContext: string
+  language?: string
+}): Promise<{ reading: string; safe: boolean; crisis?: boolean }> {
+  const lang = request.language || 'zh'
+
+  // Check user context for crisis content
+  const crisis = checkUserInputForCrisis(request.userContext, lang)
+  if (crisis) {
+    return { reading: crisis, safe: false, crisis: true }
+  }
+
+  const reading = await generateDivinationReading(request)
+
+  // Validate AI output
+  const validation = validateAiOutput(reading, lang)
+  if (!validation.safe) {
+    console.warn('Divination safety intervention:', validation.issues, 'type:', request.divinationType)
+    return {
+      reading: validation.replacement || reading,
+      safe: false,
+    }
+  }
+
+  return { reading, safe: true }
 }
 
 function getDivinationTypeName(type: string): string {

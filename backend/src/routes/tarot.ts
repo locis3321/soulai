@@ -1,8 +1,7 @@
 import { Router, Request, Response } from 'express'
 import { AuthRequest } from '../middleware/auth.js'
-import { requireTier } from '../middleware/entitlement.js'
 import { db } from '../lib/db.js'
-import { generateDivinationReading } from '../lib/ai.js'
+import { generateSafeDivinationReading } from '../lib/ai.js'
 import { buildUserContext, formatUserContextForPrompt } from '../lib/userContext.js'
 import { z } from 'zod'
 
@@ -61,8 +60,8 @@ router.post('/reading', async (req: AuthRequest, res: Response) => {
     const userContext = await buildUserContext(userId!)
     const contextPrompt = formatUserContextForPrompt(userContext)
 
-    // Generate AI reading with user context
-    const readingText = await generateDivinationReading({
+    // Generate AI reading with safety validation
+    const { reading: readingText } = await generateSafeDivinationReading({
       divinationType: 'tarot',
       divinationData: { question, cards, spreadType },
       userContext: contextPrompt,
