@@ -15,7 +15,6 @@
     "tabChat": "灵师",
     "tabCommunity": "道场",
     "tabMarketplace": "法器",
-    
     "altarTitle": "佛前供养与功德池",
     "altarDesc": "积攒功德、点燃佛前莲花灯、播放佛音梵唱，以此平息俗世杂念，清净身心。",
     "tapWoodenFish": "电子功德木鱼",
@@ -39,7 +38,6 @@
     "gongSoundEffect": "佛钟长鸣",
     "meritAdded": "功德 +1",
     "blessingFor": "祈福回向给",
-    
     "welcome": "吉祥安康",
     "welcomeBack": "欢迎回来",
     "celestialCurrents": "今日气象与宇宙原能",
@@ -63,7 +61,6 @@
     "pathwaysTitle": "推荐灵修路径",
     "readBtn": "解读",
     "closeBtn": "关闭",
-    
     "discover": {
       "title": "命运中枢",
       "subtitle": "融合东方命理与西方占星的多文化神谕智慧",
@@ -121,7 +118,6 @@
       "refreshedDaily": "每日实时刷新",
       "viewAll": "查看更多大德列表",
       "consultations": "次咨询",
-      
       "tarotModule": {
         "title": "互动塔罗神谕",
         "desc": "明确您的问题，从洗好的牌阵中抽取卡牌以校准对齐。",
@@ -203,7 +199,6 @@
     "buddhistAltar": "佛前供养",
     "offerLamp": "诚心供灯",
     "merits": "功德",
-    
     "tarotConsult": "请示塔罗神谕",
     "tarotConsultDesc": "诚心发问，从洗好的牌阵中抽取三张神谕卡牌。",
     "askQuestionPlaceholder": "例如：我的灵魂目前正在修行什么功课？",
@@ -220,7 +215,6 @@
     "baziBaziDesc": "基于天干地支推演出生时辰的五行能量分布。",
     "numberMysticism": "生命灵数与能量原型",
     "numberMysticismDesc": "您的姓名与生辰矩阵转化为能量数字。",
-    
     "chatAdvisorTitle": "灵性议会顾问",
     "chatAdvisorDesc": "咨询融合西方星象智慧与东方禅宗佛学的开悟顾问。",
     "chatPlaceholder": "敞开心扉... 您的脆弱在此处是安全的。",
@@ -230,7 +224,6 @@
     "guidedDharmaFocus": "如何将我的工作道路与灵魂使命对齐？",
     "sendBtn": "发送",
     "typeMessage": "输入消息...",
-    
     "advisors": {
       "luna": {
         "name": "露娜",
@@ -253,7 +246,6 @@
         "desc": "代表绝对临在、呼吸觉察和深邃寂静。"
       }
     },
-    
     "recoveryTitle": "疗愈圣殿",
     "recoveryDesc": "通过感官、冥想和自我疗愈工具系统，放慢您的脉搏。",
     "emotionalClimateTitle": "您的情绪气候如何？",
@@ -283,7 +275,6 @@
     "newJournalEntry": "新建日记",
     "title": "标题",
     "saveJournal": "保存日记",
-    
     "profile": {
       "title": "主页命盘与设置",
       "subtitle": "切换语言、管理账户同步以及校准出生三昧参数",
@@ -308,9 +299,7 @@
       "unlockedRecords": "黄道天干精算图",
       "enterAny": "您可以通过输入任意账号密码，以便测试移动应用的数据多包同步机制。"
     },
-    
     "profileTitle": "星盘蓝图与设置",
-    
     "marketplace": {
       "title": "神算名师 · 极力臻选",
       "all": "全部",
@@ -339,7 +328,6 @@
       "allMasters": "全境大德法师列表",
       "backToRankings": "返回圣坛排行榜"
     },
-    
     "community": {
       "title": "道场交流",
       "allFeeds": "探索社区所有讨论频道",
@@ -378,7 +366,6 @@
     "settings": "设置",
     "language": "语言",
     "logout": "退出登录",
-    
     "onboarding": {
       "welcome": "欢迎来到灵格AI",
       "welcomeDesc": "解锁您的个性化天道密码，融合东方古法智慧与西方神谕系统，同步您的真实灵性蓝图。",
@@ -412,7 +399,6 @@
       "googleSync": "谷歌同步",
       "appleID": "苹果ID"
     },
-    
     "disclaimer": {
       "general": {
         "title": "重要声明",
@@ -431,7 +417,6 @@
         "content": "疗愈内容支持情绪健康和正念，不能替代专业医疗或心理治疗。如有医疗问题，请咨询医疗保健提供者。"
       }
     },
-    
     "common": {
       "loading": "加载中...",
       "error": "错误",
@@ -449,6 +434,130 @@
       "open": "打开",
       "yes": "是",
       "no": "否"
+    },
+    "payment": {
+      "processing": "支付处理中...",
+      "processingDesc": "请稍候，正在确认您的订阅。",
+      "success": "支付成功！",
+      "planActive": "您的订阅已激活。尽情享受{{tier}}的所有功能！",
+      "continueToApp": "继续使用",
+      "pending": "支付待确认",
+      "pendingDesc": "您的支付正在处理中，可能需要几分钟才能激活。",
+      "checkStatus": "查看订阅状态"
+    },
+    "subscription": {
+      "title": "订阅管理",
+      "currentPlan": "当前方案：",
+      "monthly": "月付",
+      "yearly": "年付",
+      "yearlyDiscount": "省17%",
+      "current": "当前",
+      "upgrade": "升级",
+      "freeForever": "永久免费",
+      "cancel": "取消订阅",
+      "cancelConfirm": "确定要取消订阅吗？",
+      "upgradeTo": "升级到{{tier}}",
+      "payAlipay": "支付宝支付",
+      "payWechat": "微信支付",
+      "paymentInitiated": "支付已发起！请在支付应用中完成。",
+      "paymentFailed": "支付失败，请重试。",
+      "disclaimer": "灵性健康指导，用于反思与自我发现。非预测服务。",
+      "featureDailyInsights": "每日洞察",
+      "feature5Chats": "5次AI聊天/月",
+      "featureSingleTarot": "单牌塔罗",
+      "featureBasicAstrology": "基础星盘",
+      "featureMoodCheckin": "情绪打卡",
+      "featureJournaling": "日记",
+      "feature50Chats": "50次AI聊天/月",
+      "feature3CardTarot": "三牌塔罗",
+      "featureDetailedCharts": "详细八字与紫微",
+      "featureWeeklyReports": "每周报告",
+      "featureEmotionTrends": "情绪趋势",
+      "featureNoAds": "无广告",
+      "featureUnlimitedChats": "无限AI聊天",
+      "featureCelticTarot": "凯尔特十字塔罗",
+      "featureAllDivination": "所有占卜系统",
+      "featureMonthlyYearlyReports": "月度/年度报告",
+      "featureRelationshipReports": "关系报告",
+      "featurePrioritySupport": "优先支持",
+      "free": "免费",
+      "plus": "进阶",
+      "premium": "尊享",
+      "mo": "/月",
+      "yr": "/年",
+      "monthUnit": "个月",
+      "yearUnit": "年"
+    },
+    "paywall": {
+      "unlockFeature": "解锁功能",
+      "upgradeDesc": "此功能需要{{tier}}或更高等级的订阅。升级以解锁更深层的灵性洞察。",
+      "recommended": "推荐",
+      "monthly": "/月",
+      "yearly": "/年"
+    },
+    "astrologyModule": {
+      "sunSign": "太阳星座",
+      "moonSign": "月亮星座",
+      "ascendant": "上升星座",
+      "generateChart": "生成星盘",
+      "calculating": "计算中...",
+      "chartReading": "星盘解读",
+      "compatibility": "配对测试",
+      "partnerName": "伴侣姓名",
+      "checkCompatibility": "测试配对"
+    },
+    "baziModule": {
+      "calculateBtn": "计算你的八字",
+      "calculating": "计算中...",
+      "chartSummary": "你的命盘摘要",
+      "dayMaster": "日主：",
+      "zodiac": "生肖：",
+      "lunar": "农历：",
+      "luckCycle20": "早年运柱",
+      "luckCycle20Desc": "强烈的求知欲。在资源元素运下建立基础技能。",
+      "luckCycle20Focus": "正印·木",
+      "luckCycle30": "事业扩展柱",
+      "luckCycle30Desc": "日主受正官能量强力支持。事业大发展期。",
+      "luckCycle30Focus": "正官·火",
+      "luckCycle40": "内在主权柱",
+      "luckCycle40Desc": "财星与自我表达结合。高创业动力。",
+      "luckCycle40Focus": "偏财·土",
+      "luckCycle50": "智慧丰盛柱",
+      "luckCycle50Desc": "稳定元素影响。从外在扩张转向传承咨询。",
+      "luckCycle50Focus": "比肩·金"
+    },
+    "ziweiModule": {
+      "title": "紫微斗数（十二宫位）",
+      "desc": "选择一个宫位查看其星曜组合和年度运势评级。",
+      "calculateBtn": "计算你的紫微命盘",
+      "calculating": "计算中...",
+      "chartSummary": "你的命盘摘要",
+      "soulStar": "命主：",
+      "bodyStar": "身主：",
+      "element": "五行：",
+      "palace": "宫",
+      "palaceAnalysis": "宫位分析",
+      "stars": "星曜：",
+      "selectPalace": "选择一个宫位查看详情。",
+      "calculateFirst": "请先计算命盘以查看宫位详情。",
+      "palaceLife": "命",
+      "palaceSpouse": "夫妻",
+      "palaceWealth": "财帛",
+      "palaceCareer": "官禄",
+      "palaceHealth": "疾厄",
+      "palaceTravel": "迁移"
+    },
+    "numerologyModule": {
+      "title": "灵数能量指南",
+      "desc": "你的姓名和出生信息转化为能量数字。查看深层振动原型。",
+      "calculateBtn": "计算你的生命灵数",
+      "calculating": "计算中...",
+      "lifePathNumber": "你的生命灵数",
+      "calculatedFrom": "根据出生日期计算：{{date}}",
+      "gatewayTitle": "直觉之门",
+      "gatewayDesc": "代表直接的心灵感应、电性神经能量、传递真相。",
+      "architectTitle": "大师建筑师",
+      "architectDesc": "将宏大愿景转化为具体物理系统的能力。高度领导力和行动力。"
     }
   }
 }

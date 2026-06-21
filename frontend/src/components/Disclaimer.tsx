@@ -2,7 +2,7 @@ import React from "react";
 import { AlertTriangle, Shield, Info } from "lucide-react";
 
 interface DisclaimerProps {
-  type?: "general" | "ai" | "divination" | "healing";
+  type?: "general" | "ai" | "divination" | "healing" | "payment";
   className?: string;
 }
 
@@ -26,6 +26,11 @@ const disclaimerContent = {
     icon: <Shield className="h-4 w-4" />,
     title: "Healing Disclaimer",
     message: "Healing content supports emotional well-being and mindfulness. It is not a substitute for professional medical or psychological treatment. Consult healthcare providers for medical concerns."
+  },
+  payment: {
+    icon: <Shield className="h-4 w-4" />,
+    title: "Payment & Subscription Disclaimer",
+    message: "Subscriptions provide access to enhanced spiritual wellness features for reflection and self-discovery. They are not prediction services. Payments are processed securely. You may cancel at any time. No refunds for partial periods."
   }
 };
 

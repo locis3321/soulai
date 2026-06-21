@@ -1,16 +1,22 @@
 import React, { useState } from 'react'
 import { motion } from 'motion/react'
-import { Crown, Check, X, Sparkles, Shield, Zap } from 'lucide-react'
+import { Crown, Check, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { useSubscription, useSubscriptionPlans, useCreatePaymentIntent, useCancelSubscription } from '../hooks/useApi'
+import { useSubscription, useCreatePaymentIntent, useCancelSubscription } from '../hooks/useApi'
 import { SubscriptionTier, SUBSCRIPTION_PRICES, SUBSCRIPTION_FEATURES } from '../lib/subscription'
 import { useStore } from '../lib/store'
 import { toast } from 'sonner'
 
-const tierMeta: Record<SubscriptionTier, { label: string; icon: string; color: string; borderColor: string; bgGlow: string }> = {
-  free: { label: 'Free', icon: '🌿', color: 'text-slate-400', borderColor: 'border-white/10', bgGlow: '' },
-  plus: { label: 'Plus', icon: '✨', color: 'text-[#7C5CFF]', borderColor: 'border-[#7C5CFF]/30', bgGlow: 'bg-[#7C5CFF]/5' },
-  premium: { label: 'Premium', icon: '👑', color: 'text-[#FFD166]', borderColor: 'border-[#FFD166]/30', bgGlow: 'bg-[#FFD166]/5' },
+const tierMeta: Record<SubscriptionTier, { labelKey: string; icon: string; color: string; borderColor: string; bgGlow: string }> = {
+  free: { labelKey: 'subscription.free', icon: '🌿', color: 'text-slate-400', borderColor: 'border-white/10', bgGlow: '' },
+  plus: { labelKey: 'subscription.plus', icon: '✨', color: 'text-[#7C5CFF]', borderColor: 'border-[#7C5CFF]/30', bgGlow: 'bg-[#7C5CFF]/5' },
+  premium: { labelKey: 'subscription.premium', icon: '👑', color: 'text-[#FFD166]', borderColor: 'border-[#FFD166]/30', bgGlow: 'bg-[#FFD166]/5' },
+}
+
+const TIER_FEATURE_KEYS: Record<SubscriptionTier, string[]> = {
+  free: ['subscription.featureDailyInsights', 'subscription.feature5Chats', 'subscription.featureSingleTarot', 'subscription.featureBasicAstrology', 'subscription.featureMoodCheckin', 'subscription.featureJournaling'],
+  plus: ['subscription.feature50Chats', 'subscription.feature3CardTarot', 'subscription.featureDetailedCharts', 'subscription.featureWeeklyReports', 'subscription.featureEmotionTrends', 'subscription.featureNoAds'],
+  premium: ['subscription.featureUnlimitedChats', 'subscription.featureCelticTarot', 'subscription.featureAllDivination', 'subscription.featureMonthlyYearlyReports', 'subscription.featureRelationshipReports', 'subscription.featurePrioritySupport'],
 }
 
 export default function SubscriptionPage() {
@@ -20,7 +26,7 @@ export default function SubscriptionPage() {
   const [selectedPeriod, setSelectedPeriod] = useState<'monthly' | 'yearly'>('monthly')
   const [showPayment, setShowPayment] = useState<SubscriptionTier | null>(null)
 
-  const { data: subData } = useSubscription()
+  useSubscription()
   const createPayment = useCreatePaymentIntent()
   const cancelSub = useCancelSubscription()
 
@@ -29,15 +35,15 @@ export default function SubscriptionPage() {
   const handleSubscribe = async (tier: SubscriptionTier, method: 'alipay' | 'wechat') => {
     try {
       await createPayment.mutateAsync({ planId: tier, paymentMethod: method, period: selectedPeriod })
-      toast.success('Payment initiated! Complete in your payment app.')
+      toast.success(t('subscription.paymentInitiated'))
       setShowPayment(null)
     } catch (err) {
-      toast.error('Payment failed. Please try again.')
+      toast.error(t('subscription.paymentFailed'))
     }
   }
 
   const handleCancel = async () => {
-    if (confirm('Are you sure you want to cancel your subscription?')) {
+    if (confirm(t('subscription.cancelConfirm'))) {
       await cancelSub.mutateAsync()
     }
   }
@@ -47,9 +53,9 @@ export default function SubscriptionPage() {
       {/* Header */}
       <div className="text-center space-y-2">
         <Crown className="w-8 h-8 text-[#FFD166] mx-auto" />
-        <h1 className="font-display text-xl font-bold text-slate-100">Subscription</h1>
+        <h1 className="font-display text-xl font-bold text-slate-100">{t('subscription.title')}</h1>
         <p className="text-slate-400 text-xs">
-          Current plan: <span className={tierMeta[currentTier].color + ' font-bold'}>{tierMeta[currentTier].label}</span>
+          {t('subscription.currentPlan')} <span className={tierMeta[currentTier].color + ' font-bold'}>{t(tierMeta[currentTier].labelKey)}</span>
         </p>
       </div>
 
@@ -62,7 +68,7 @@ export default function SubscriptionPage() {
               selectedPeriod === 'monthly' ? 'bg-[#7C5CFF] text-white' : 'text-slate-400 hover:text-white'
             }`}
           >
-            Monthly
+            {t('subscription.monthly')}
           </button>
           <button
             onClick={() => setSelectedPeriod('yearly')}
@@ -70,7 +76,7 @@ export default function SubscriptionPage() {
               selectedPeriod === 'yearly' ? 'bg-[#7C5CFF] text-white' : 'text-slate-400 hover:text-white'
             }`}
           >
-            Yearly <span className="text-[#10B981] text-[9px]">-17%</span>
+            {t('subscription.yearly')} <span className="text-[#10B981] text-[9px]">{t('subscription.yearlyDiscount')}</span>
           </button>
         </div>
       </div>
@@ -80,7 +86,6 @@ export default function SubscriptionPage() {
         {tiers.map((tier) => {
           const meta = tierMeta[tier]
           const price = SUBSCRIPTION_PRICES[tier]
-          const features = SUBSCRIPTION_FEATURES[tier]
           const isCurrent = tier === currentTier
           const isUpgrade = tiers.indexOf(tier) > tiers.indexOf(currentTier)
 
@@ -91,7 +96,7 @@ export default function SubscriptionPage() {
             >
               {isCurrent && (
                 <span className="absolute -top-2.5 right-4 bg-[#10B981] text-white text-[9px] font-mono font-bold px-2 py-0.5 rounded-full uppercase">
-                  Current
+                  {t('subscription.current')}
                 </span>
               )}
 
@@ -99,10 +104,10 @@ export default function SubscriptionPage() {
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="text-2xl">{meta.icon}</span>
-                    <h3 className={`font-display font-bold text-lg ${meta.color}`}>{meta.label}</h3>
+                    <h3 className={`font-display font-bold text-lg ${meta.color}`}>{t(meta.labelKey)}</h3>
                   </div>
                   <p className="text-slate-500 text-xs font-mono mt-1">
-                    {price.monthly === 0 ? 'Free forever' : `¥${selectedPeriod === 'monthly' ? price.monthly : price.yearly}/${selectedPeriod === 'monthly' ? 'mo' : 'yr'}`}
+                    {price.monthly === 0 ? t('subscription.freeForever') : `¥${selectedPeriod === 'monthly' ? price.monthly : price.yearly}/${selectedPeriod === 'monthly' ? t('subscription.mo') : t('subscription.yr')}`}
                   </p>
                 </div>
 
@@ -111,17 +116,17 @@ export default function SubscriptionPage() {
                     onClick={() => setShowPayment(tier)}
                     className="px-5 py-2 bg-[#7C5CFF] hover:bg-[#6D4AFF] text-white text-xs font-mono font-bold rounded-xl transition-all cursor-pointer"
                   >
-                    Upgrade
+                    {t('subscription.upgrade')}
                   </button>
                 )}
               </div>
 
               {/* Feature list */}
               <div className="grid grid-cols-2 gap-2">
-                {getTierFeatureList(tier).map((feat, i) => (
+                {TIER_FEATURE_KEYS[tier].map((key, i) => (
                   <div key={i} className="flex items-start gap-1.5 text-[10px] text-slate-400">
                     <Check className="w-3 h-3 text-[#10B981] shrink-0 mt-0.5" />
-                    <span>{feat}</span>
+                    <span>{t(key)}</span>
                   </div>
                 ))}
               </div>
@@ -137,7 +142,7 @@ export default function SubscriptionPage() {
             onClick={handleCancel}
             className="text-slate-500 hover:text-red-400 text-xs font-mono transition-colors cursor-pointer"
           >
-            Cancel subscription
+            {t('subscription.cancel')}
           </button>
         </div>
       )}
@@ -158,7 +163,7 @@ export default function SubscriptionPage() {
           >
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-display font-bold text-sm text-slate-100">
-                Upgrade to {tierMeta[showPayment].label}
+                {t('subscription.upgradeTo', { tier: t(tierMeta[showPayment].labelKey) })}
               </h3>
               <button onClick={() => setShowPayment(null)} className="text-slate-500 hover:text-white">
                 <X className="w-4 h-4" />
@@ -167,7 +172,7 @@ export default function SubscriptionPage() {
 
             <p className="text-slate-400 text-xs mb-4">
               ¥{selectedPeriod === 'monthly' ? SUBSCRIPTION_PRICES[showPayment].monthly : SUBSCRIPTION_PRICES[showPayment].yearly}
-              /{selectedPeriod === 'monthly' ? 'month' : 'year'}
+              /{selectedPeriod === 'monthly' ? t('subscription.monthUnit') : t('subscription.yearUnit')}
             </p>
 
             <div className="space-y-2">
@@ -176,33 +181,23 @@ export default function SubscriptionPage() {
                 disabled={createPayment.isPending}
                 className="w-full py-3 bg-[#1677FF] hover:bg-[#0958d9] disabled:opacity-40 text-white text-xs font-mono font-bold rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
-                Pay with Alipay
+                {t('subscription.payAlipay')}
               </button>
               <button
                 onClick={() => handleSubscribe(showPayment, 'wechat')}
                 disabled={createPayment.isPending}
-                className="w-full py-3 bg-[#07C160] hover:bg={[#06ae56]} disabled:opacity-40 text-white text-xs font-mono font-bold rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer"
+                className="w-full py-3 bg-[#07C160] hover:bg-[#06ae56] disabled:opacity-40 text-white text-xs font-mono font-bold rounded-xl flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
-                Pay with WeChat
+                {t('subscription.payWechat')}
               </button>
             </div>
 
             <p className="text-slate-600 text-[9px] text-center mt-3 font-mono">
-              Spiritual wellness guidance for reflection and self-discovery.
+              {t('subscription.disclaimer')}
             </p>
           </motion.div>
         </motion.div>
       )}
     </div>
   )
-}
-
-function getTierFeatureList(tier: SubscriptionTier): string[] {
-  if (tier === 'free') {
-    return ['Daily insights', '5 AI chats/mo', 'Single card tarot', 'Basic astrology', 'Mood check-in', 'Journaling']
-  }
-  if (tier === 'plus') {
-    return ['50 AI chats/mo', '3-card tarot', 'Detailed BaZi & ZiWei', 'Weekly reports', 'Emotion trends', 'No ads']
-  }
-  return ['Unlimited AI chats', 'Celtic Cross tarot', 'All divination systems', 'Monthly & yearly reports', 'Relationship reports', 'Priority support']
 }

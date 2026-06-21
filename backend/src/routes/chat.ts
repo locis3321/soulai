@@ -5,6 +5,7 @@ import { db } from '../lib/db.js'
 import { generateAIResponse } from '../lib/ai.js'
 import { buildUserContext, formatUserContextForPrompt } from '../lib/userContext.js'
 import { checkUserInputForCrisis, validateAiOutput } from '../lib/safety.js'
+import { moderateContent } from '../lib/moderation.js'
 import { z } from 'zod'
 
 const router = Router()
@@ -150,15 +151,19 @@ router.post('/sessions/:sessionId/messages', async (req: AuthRequest, res: Respo
     const userContext = await buildUserContext(userId!)
     const contextPrompt = formatUserContextForPrompt(userContext)
 
+    // Moderate user input
+    const moderation = moderateContent(content, userContext.language)
+    const moderatedContent = moderation.filtered
+
     // Safety: check user input for crisis content
-    const crisisResponse = checkUserInputForCrisis(content, userContext.language)
+    const crisisResponse = checkUserInputForCrisis(moderatedContent, userContext.language)
     if (crisisResponse) {
-      await db.query(`INSERT INTO chat_messages (session_id, role, content) VALUES ($1, 'user', $2)`, [sessionId, content])
+      await db.query(`INSERT INTO chat_messages (session_id, role, content) VALUES ($1, 'user', $2)`, [sessionId, moderatedContent])
       const aiMsg = await db.query(
         `INSERT INTO chat_messages (session_id, role, content) VALUES ($1, 'assistant', $2) RETURNING id, role, content, created_at`,
         [sessionId, crisisResponse]
       )
-      return res.json({ userMessage: { role: 'user', content }, aiMessage: aiMsg.rows[0], crisis: true })
+      return res.json({ userMessage: { role: 'user', content: moderatedContent }, aiMessage: aiMsg.rows[0], crisis: true, moderated: !moderation.clean })
     }
 
     // Get recent messages for context
@@ -184,14 +189,14 @@ router.post('/sessions/:sessionId/messages', async (req: AuthRequest, res: Respo
     ]
 
     // Add current user message
-    messages.push({ role: 'user', content })
+    messages.push({ role: 'user', content: moderatedContent })
 
     // Save user message
     const userMessage = await db.query(
       `INSERT INTO chat_messages (session_id, role, content)
        VALUES ($1, 'user', $2)
        RETURNING id, role, content, created_at`,
-      [sessionId, content]
+      [sessionId, moderatedContent]
     )
 
     // Generate AI response using MiniMax-M3 with user context

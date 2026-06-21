@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express'
 import { AuthRequest } from '../middleware/auth.js'
 import { db } from '../lib/db.js'
+import { moderateContent } from '../lib/moderation.js'
 import { z } from 'zod'
 
 const router = Router()
@@ -210,14 +211,18 @@ router.post('/journals', async (req: AuthRequest, res: Response) => {
     const userId = req.userId
     const { title, content, mood, tags } = journalSchema.parse(req.body)
 
+    // Moderate content
+    const titleMod = moderateContent(title)
+    const contentMod = moderateContent(content)
+
     const result = await db.query(
       `INSERT INTO journals (user_id, title, content, mood, tags)
        VALUES ($1, $2, $3, $4, $5)
        RETURNING id, title, content, mood, tags, created_at, updated_at`,
-      [userId, title, content, mood || null, tags || []]
+      [userId, titleMod.filtered, contentMod.filtered, mood || null, tags || []]
     )
 
-    res.status(201).json({ journal: result.rows[0] })
+    res.status(201).json({ journal: result.rows[0], moderated: !titleMod.clean || !contentMod.clean })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Validation error', details: error.errors })

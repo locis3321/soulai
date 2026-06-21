@@ -1,8 +1,8 @@
 import React from 'react'
 import { motion, AnimatePresence } from 'motion/react'
-import { X, Crown, Check, Sparkles } from 'lucide-react'
+import { X, Check } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { SubscriptionTier, SUBSCRIPTION_PRICES, SUBSCRIPTION_FEATURES } from '../lib/subscription'
+import { SubscriptionTier, SUBSCRIPTION_PRICES } from '../lib/subscription'
 
 interface PaywallModalProps {
   isOpen: boolean
@@ -13,15 +13,21 @@ interface PaywallModalProps {
   onSubscribe: (tier: SubscriptionTier) => void
 }
 
-const tierInfo: Record<SubscriptionTier, { label: string; color: string; icon: string }> = {
-  free: { label: 'Free', color: 'text-slate-400', icon: '🌿' },
-  plus: { label: 'Plus', color: 'text-[#7C5CFF]', icon: '✨' },
-  premium: { label: 'Premium', color: 'text-[#FFD166]', icon: '👑' },
+const tierLabelKeys: Record<SubscriptionTier, string> = {
+  free: 'subscription.free',
+  plus: 'subscription.plus',
+  premium: 'subscription.premium',
+}
+
+function getTierHighlights(tier: SubscriptionTier): string[] {
+  if (tier === 'plus') {
+    return ['subscription.feature50Chats', 'subscription.feature3CardTarot', 'subscription.featureDetailedCharts', 'subscription.featureWeeklyReports', 'subscription.featureNoAds']
+  }
+  return ['subscription.featureUnlimitedChats', 'subscription.featureCelticTarot', 'subscription.featureAllDivination', 'subscription.featureMonthlyYearlyReports', 'subscription.featurePrioritySupport']
 }
 
 export default function PaywallModal({ isOpen, onClose, feature, requiredTier, currentTier, onSubscribe }: PaywallModalProps) {
   const { t } = useTranslation()
-
   const tiers: SubscriptionTier[] = ['plus', 'premium']
 
   return (
@@ -44,7 +50,7 @@ export default function PaywallModal({ isOpen, onClose, feature, requiredTier, c
             {/* Header */}
             <div className="flex justify-between items-start mb-4">
               <div>
-                <span className="font-mono text-[9px] uppercase tracking-widest text-[#FFD166]">Unlock Feature</span>
+                <span className="font-mono text-[9px] uppercase tracking-widest text-[#FFD166]">{t('paywall.unlockFeature')}</span>
                 <h2 className="font-display text-lg font-bold text-slate-100 mt-1">{feature}</h2>
               </div>
               <button onClick={onClose} className="text-slate-500 hover:text-white transition-colors p-1">
@@ -53,13 +59,12 @@ export default function PaywallModal({ isOpen, onClose, feature, requiredTier, c
             </div>
 
             <p className="text-slate-400 text-xs mb-5 leading-relaxed">
-              This feature requires a {tierInfo[requiredTier].label} subscription or higher. Upgrade to unlock deeper spiritual insights.
+              {t('paywall.upgradeDesc', { tier: t(tierLabelKeys[requiredTier]) })}
             </p>
 
             {/* Tier Cards */}
             <div className="space-y-3">
               {tiers.map((tier) => {
-                const info = tierInfo[tier]
                 const isCurrentOrBelow = tiers.indexOf(tier) <= tiers.indexOf(currentTier)
                 const isRequired = tier === requiredTier
                 const price = SUBSCRIPTION_PRICES[tier]
@@ -75,17 +80,19 @@ export default function PaywallModal({ isOpen, onClose, feature, requiredTier, c
                   >
                     {isRequired && (
                       <span className="absolute -top-2.5 left-4 bg-[#7C5CFF] text-white text-[9px] font-mono font-bold px-2 py-0.5 rounded-full uppercase">
-                        Recommended
+                        {t('paywall.recommended')}
                       </span>
                     )}
 
                     <div className="flex justify-between items-center">
                       <div className="flex items-center gap-2">
-                        <span className="text-xl">{info.icon}</span>
+                        <span className="text-xl">{tier === 'plus' ? '✨' : '👑'}</span>
                         <div>
-                          <h3 className={`font-display font-bold text-sm ${info.color}`}>{info.label}</h3>
+                          <h3 className={`font-display font-bold text-sm ${tier === 'plus' ? 'text-[#7C5CFF]' : 'text-[#FFD166]'}`}>
+                            {t(tierLabelKeys[tier])}
+                          </h3>
                           <p className="text-slate-500 text-[10px] font-mono">
-                            ¥{price.monthly}/mo · ¥{price.yearly}/yr
+                            ¥{price.monthly}{t('paywall.monthly')} · ¥{price.yearly}{t('paywall.yearly')}
                           </p>
                         </div>
                       </div>
@@ -99,16 +106,15 @@ export default function PaywallModal({ isOpen, onClose, feature, requiredTier, c
                             : 'bg-[#7C5CFF] hover:bg-[#6D4AFF] text-white cursor-pointer'
                         }`}
                       >
-                        {isCurrentOrBelow ? 'Current' : 'Upgrade'}
+                        {isCurrentOrBelow ? t('subscription.current') : t('subscription.upgrade')}
                       </button>
                     </div>
 
-                    {/* Key features */}
                     <div className="mt-3 grid grid-cols-2 gap-1.5">
-                      {getTierHighlights(tier).map((feat, i) => (
+                      {getTierHighlights(tier).map((key, i) => (
                         <div key={i} className="flex items-center gap-1.5 text-[10px] text-slate-400">
                           <Check className="w-3 h-3 text-[#10B981] shrink-0" />
-                          <span>{feat}</span>
+                          <span>{t(key)}</span>
                         </div>
                       ))}
                     </div>
@@ -117,20 +123,12 @@ export default function PaywallModal({ isOpen, onClose, feature, requiredTier, c
               })}
             </div>
 
-            {/* Footer */}
             <p className="text-slate-600 text-[9px] text-center mt-4 font-mono">
-              Spiritual wellness guidance for reflection and self-discovery. Not a prediction service.
+              {t('subscription.disclaimer')}
             </p>
           </motion.div>
         </motion.div>
       )}
     </AnimatePresence>
   )
-}
-
-function getTierHighlights(tier: SubscriptionTier): string[] {
-  if (tier === 'plus') {
-    return ['50 AI chats/mo', '3-card tarot', 'Detailed BaZi', 'Weekly reports', 'No ads']
-  }
-  return ['Unlimited AI chats', 'Celtic Cross tarot', 'All divination', 'Monthly/yearly reports', 'Priority support']
 }

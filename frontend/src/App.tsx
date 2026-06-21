@@ -5,6 +5,7 @@ import { Toaster } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import { useStore } from './lib/store'
 import { api } from './lib/api'
+import { analytics, trackPageView } from './lib/analytics-client'
 import { UserProfile } from './types'
 
 // Components
@@ -199,6 +200,12 @@ export default function App() {
       setLanguage(savedLang)
     }
   }, [setLanguage])
+
+  // Initialize analytics
+  useEffect(() => {
+    analytics.init(() => useStore.getState().auth.token)
+    return () => analytics.destroy()
+  }, [])
 
   // Validate persisted auth token on app load
   useEffect(() => {

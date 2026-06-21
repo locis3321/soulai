@@ -21,6 +21,8 @@ import paymentRoutes from './routes/payments.js'
 import paymentCallbackRoutes from './routes/payments-callback.js'
 import memoryRoutes from './routes/memory.js'
 import healthRoutes from './routes/health.js'
+import privacyRoutes from './routes/privacy.js'
+import analyticsRoutes from './routes/analytics.js'
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler.js'
@@ -73,6 +75,8 @@ app.use('/api/healing', authenticateToken, healingRoutes)
 app.use('/api/payments/callback', paymentCallbackRoutes) // No auth - payment providers call these
 app.use('/api/payments', authenticateToken, paymentRoutes)
 app.use('/api/memory', authenticateToken, memoryRoutes)
+app.use('/api/privacy', authenticateToken, privacyRoutes)
+app.use('/api/analytics', authenticateToken, analyticsRoutes)
 
 // Error handling
 app.use(errorHandler)
