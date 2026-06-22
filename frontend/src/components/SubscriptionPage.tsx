@@ -21,14 +21,17 @@ const TIER_FEATURE_KEYS: Record<SubscriptionTier, string[]> = {
 
 export default function SubscriptionPage() {
   const { t } = useTranslation()
-  const { auth } = useStore()
-  const currentTier = (auth.user?.subscriptionTier as SubscriptionTier) || 'free'
+  const { auth, setUser } = useStore()
   const [selectedPeriod, setSelectedPeriod] = useState<'monthly' | 'yearly'>('monthly')
   const [showPayment, setShowPayment] = useState<SubscriptionTier | null>(null)
 
-  useSubscription()
+  // Fetch real subscription status from backend
+  const { data: subData } = useSubscription()
   const createPayment = useCreatePaymentIntent()
   const cancelSub = useCancelSubscription()
+
+  // Use backend subscription tier if available, fall back to store
+  const currentTier = (subData?.subscription?.tier as SubscriptionTier) || (auth.user?.subscriptionTier as SubscriptionTier) || 'free'
 
   const tiers: SubscriptionTier[] = ['free', 'plus', 'premium']
 
