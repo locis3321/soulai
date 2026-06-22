@@ -185,6 +185,8 @@ class MockProvider implements AIProvider {
 
 // ─── Provider Chain with Retry ──────────────────────────────────────────────
 
+const ALLOW_MOCK_FALLBACK = process.env.NODE_ENV !== 'production'
+
 class ProviderChain implements AIProvider {
   name = 'chain'
   private providers: AIProvider[]
@@ -205,7 +207,10 @@ class ProviderChain implements AIProvider {
   async complete(req: CompletionRequest): Promise<CompletionResponse> {
     let lastError: Error | null = null
 
-    for (const provider of this.providers) {
+    // Try real providers first (exclude mock)
+    const realProviders = this.providers.filter(p => p.name !== 'mock')
+
+    for (const provider of realProviders) {
       for (let attempt = 0; attempt < this.maxRetries; attempt++) {
         try {
           const result = await provider.complete(req)
@@ -220,22 +225,31 @@ class ProviderChain implements AIProvider {
           )
 
           if (!isRetryable || attempt === this.maxRetries - 1) {
-            console.warn(`AI provider ${provider.name} failed (attempt ${attempt + 1}):`, (err as Error).message)
+            console.error(`AI provider ${provider.name} failed (attempt ${attempt + 1}):`, (err as Error).message)
             break
           }
 
-          // Exponential backoff
           const delay = Math.min(1000 * Math.pow(2, attempt), 5000)
-          console.log(`Retrying ${provider.name} in ${delay}ms...`)
+          console.warn(`Retrying ${provider.name} in ${delay}ms...`)
           await new Promise(r => setTimeout(r, delay))
         }
       }
     }
 
-    // All providers failed - use mock fallback
-    console.warn('All AI providers failed, using mock fallback')
-    const mock = new MockProvider()
-    return mock.complete(req)
+    // All real providers failed
+    if (ALLOW_MOCK_FALLBACK) {
+      console.warn('⚠️ All AI providers failed, falling back to mock responses (dev mode only)')
+      const mock = this.providers.find(p => p.name === 'mock')
+      if (mock) {
+        const result = await mock.complete(req)
+        return { ...result, provider: 'mock-fallback' }
+      }
+    }
+
+    // Production: no mock fallback, throw error
+    const errorMsg = `All AI providers failed. Last error: ${lastError?.message || 'unknown'}`
+    console.error(`❌ AI PROVIDER FAILURE (production): ${errorMsg}`)
+    throw new Error(errorMsg)
   }
 }
 
