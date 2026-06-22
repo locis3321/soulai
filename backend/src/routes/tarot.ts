@@ -3,6 +3,7 @@ import { AuthRequest } from '../middleware/auth.js'
 import { db } from '../lib/db.js'
 import { generateSafeDivinationReading } from '../lib/ai.js'
 import { buildUserContext, formatUserContextForPrompt } from '../lib/userContext.js'
+import { getEffectiveTier } from '../lib/subscription.js'
 import { z } from 'zod'
 
 const router = Router()
@@ -44,10 +45,9 @@ router.post('/reading', async (req: AuthRequest, res: Response) => {
     const userId = req.userId
     const { question, cards, spreadType } = tarotReadingSchema.parse(req.body)
 
-    // Spread type entitlement checks
+    // Spread type entitlement checks (getEffectiveTier checks expiry)
     if (spreadType === 'three' || spreadType === 'celtic') {
-      const userResult = await db.query('SELECT subscription_tier FROM users WHERE id = $1', [userId])
-      const tier = userResult.rows[0]?.subscription_tier || 'free'
+      const tier = await getEffectiveTier(userId!)
       if (tier === 'free') {
         return res.status(403).json({
           error: `${spreadType === 'celtic' ? 'Celtic Cross' : 'Three Card'} spread requires Plus or Premium subscription`,

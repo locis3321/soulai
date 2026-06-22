@@ -1,11 +1,12 @@
 import { Router, Request, Response } from 'express'
 import { AuthRequest } from '../middleware/auth.js'
-import { checkEntitlement, trackUsage } from '../middleware/entitlement.js'
+import { trackUsage } from '../middleware/entitlement.js'
 import { db } from '../lib/db.js'
 import { generateAIResponse } from '../lib/ai.js'
 import { buildUserContext, formatUserContextForPrompt } from '../lib/userContext.js'
 import { checkUserInputForCrisis, validateAiOutput } from '../lib/safety.js'
 import { moderateContent } from '../lib/moderation.js'
+import { getEffectiveTier } from '../lib/subscription.js'
 import { z } from 'zod'
 
 const router = Router()
@@ -110,9 +111,8 @@ router.post('/sessions/:sessionId/messages', async (req: AuthRequest, res: Respo
     const { sessionId } = req.params
     const { content } = sendMessageSchema.parse(req.body)
 
-    // Check chat entitlement
-    const userResult = await db.query('SELECT subscription_tier FROM users WHERE id = $1', [userId])
-    const tier = userResult.rows[0]?.subscription_tier || 'free'
+    // Check chat entitlement (getEffectiveTier checks expiry)
+    const tier = await getEffectiveTier(userId!)
     const isUnlimited = tier === 'premium'
 
     if (!isUnlimited) {
