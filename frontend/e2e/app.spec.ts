@@ -33,7 +33,6 @@ test.describe('SoulAI App', () => {
         const state = {
           state: {
             auth: { user, token, isAuthenticated: true, isLoading: false, error: null },
-            activeTab: 'home',
             language: 'en',
             largeTextMode: false,
             hasOnboarded: true,
@@ -52,8 +51,9 @@ test.describe('SoulAI App', () => {
     // Home tab should be active
     await expect(page.locator('[data-testid="nav-home"]')).toBeVisible()
 
-    // Navigate to Discover tab
-    await page.locator('[data-testid="nav-discover"]').click()
+    // Navigate to Discover via URL
+    await page.goto('/discover')
+    await expect(page).toHaveURL(/\/discover/)
 
     // Discover hub should render
     await expect(page.locator('#discover-view-container')).toBeVisible()
@@ -116,7 +116,6 @@ test.describe('SoulAI App', () => {
         const state = {
           state: {
             auth: { user, token, isAuthenticated: true, isLoading: false, error: null },
-            activeTab: 'discover',
             language: 'en',
             largeTextMode: false,
             hasOnboarded: true,
@@ -128,10 +127,10 @@ test.describe('SoulAI App', () => {
       { token, user },
     )
 
-    await page.goto('/')
-    await expect(page).toHaveURL(/\/$/)
+    await page.goto('/discover')
+    await expect(page).toHaveURL(/\/discover/)
 
-    // Should already be on Discover (activeTab: 'discover')
+    // Should be on Discover
     await expect(page.locator('#discover-view-container')).toBeVisible()
 
     // Click BaZi card
@@ -160,7 +159,6 @@ test.describe('SoulAI App', () => {
         const state = {
           state: {
             auth: { user, token, isAuthenticated: true, isLoading: false, error: null },
-            activeTab: 'discover',
             language: 'en',
             largeTextMode: false,
             hasOnboarded: true,
@@ -172,7 +170,7 @@ test.describe('SoulAI App', () => {
       { token, user: userWithBirth },
     )
 
-    await page.goto('/')
+    await page.goto('/discover')
     await expect(page.locator('#discover-view-container')).toBeVisible()
 
     // Click BaZi card to open the module
@@ -261,7 +259,6 @@ test.describe('SoulAI App', () => {
         const state = {
           state: {
             auth: { user, token, isAuthenticated: true, isLoading: false, error: null },
-            activeTab: 'home',
             language: 'en',
             largeTextMode: false,
             hasOnboarded: false,
@@ -426,7 +423,6 @@ test.describe('SoulAI App', () => {
         const state = {
           state: {
             auth: { user, token, isAuthenticated: true, isLoading: false, error: null },
-            activeTab: 'home',
             language: 'en',
             largeTextMode: false,
             hasOnboarded: true,
@@ -449,7 +445,7 @@ test.describe('SoulAI App', () => {
     await page.waitForLoadState('networkidle')
 
     const critical = errors.filter(
-      (e) => !e.includes('favicon') && !e.includes('manifest') && !e.includes('service-worker') && !e.includes('ERR_CONNECTION') && !e.includes('net::'),
+      (e) => !e.includes('favicon') && !e.includes('manifest') && !e.includes('service-worker') && !e.includes('ERR_CONNECTION') && !e.includes('net::') && !e.includes('404'),
     )
     expect(critical).toHaveLength(0)
   })

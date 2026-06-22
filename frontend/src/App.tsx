@@ -1,14 +1,13 @@
-import React, { useEffect, useState } from 'react'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
+import React, { useEffect, useState, createContext, useContext } from 'react'
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Toaster } from 'sonner'
 import { useTranslation } from 'react-i18next'
 import { useStore } from './lib/store'
 import { api } from './lib/api'
-import { analytics, trackPageView } from './lib/analytics-client'
+import { analytics } from './lib/analytics-client'
 import { UserProfile } from './types'
 
-// Components
 import HomeView from './components/HomeView'
 import DiscoverView from './components/DiscoverView'
 import ChatView from './components/ChatView'
@@ -21,321 +20,207 @@ import Navigation from './components/Navigation'
 import LoginPage from './components/LoginPage'
 import RegisterPage from './components/RegisterPage'
 import PaymentSuccessPage from './components/PaymentSuccessPage'
-import DeepLinkHandler from './components/DeepLinkHandler'
 
-// Create query client
 const queryClient = new QueryClient({
   defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
+    queries: { staleTime: 5 * 60 * 1000, retry: 1, refetchOnWindowFocus: false },
   },
 })
 
-// Protected route component
+// ─── Context for shared layout props ─────────────────────────────────────
+
+interface LayoutContext {
+  profile: UserProfile
+  isPremium: boolean
+  handleChangeProfile: (p: UserProfile) => void
+  setLanguage: (lang: string) => void
+}
+
+const LayoutCtx = createContext<LayoutContext>({
+  profile: { name: '', birthDate: '', birthTime: '', birthPlace: '' },
+  isPremium: false,
+  handleChangeProfile: () => {},
+  setLanguage: () => {},
+})
+
+// ─── Guards ──────────────────────────────────────────────────────────────
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { auth } = useStore()
-  
-  if (!auth.isAuthenticated) {
-    return <Navigate to="/login" replace />
-  }
-  
+  if (!auth.isAuthenticated) return <Navigate to="/login" replace />
   return <>{children}</>
 }
 
-// Auth pages component
-function AuthPages() {
-  const [isLogin, setIsLogin] = useState(true)
-  const { auth } = useStore()
-
-  if (auth.isAuthenticated) {
-    return <Navigate to="/" replace />
-  }
-
-  return isLogin ? (
-    <LoginPage
-      onSwitchToRegister={() => setIsLogin(false)}
-      onSuccess={() => {}}
-    />
-  ) : (
-    <RegisterPage
-      onSwitchToLogin={() => setIsLogin(true)}
-      onSuccess={() => {}}
-    />
-  )
+function OnboardingGuard({ children }: { children: React.ReactNode }) {
+  const { auth, hasOnboarded } = useStore()
+  if (!auth.isAuthenticated) return <Navigate to="/login" replace />
+  if (!hasOnboarded) return <Navigate to="/onboarding" replace />
+  return <>{children}</>
 }
 
-// Main app layout
+// ─── Auth page ───────────────────────────────────────────────────────────
+
+function AuthPage() {
+  const { auth } = useStore()
+  const [isLogin, setIsLogin] = useState(true)
+  if (auth.isAuthenticated) return <Navigate to="/" replace />
+  return isLogin
+    ? <LoginPage onSwitchToRegister={() => setIsLogin(false)} onSuccess={() => {}} />
+    : <RegisterPage onSwitchToLogin={() => setIsLogin(true)} onSuccess={() => {}} />
+}
+
+// ─── App layout with nested routes ───────────────────────────────────────
+
 function AppLayout() {
-  const { t, i18n } = useTranslation()
-  const { 
-    activeTab, 
-    setActiveTab, 
-    language, 
-    setLanguage,
-    largeTextMode,
-    auth,
-    setUser
-  } = useStore()
+  const { language, auth, setUser, setLanguage, largeTextMode } = useStore()
+  const { i18n } = useTranslation()
+  const location = useLocation()
 
-  // Sync language with i18n
-  useEffect(() => {
-    i18n.changeLanguage(language)
-  }, [language, i18n])
+  useEffect(() => { i18n.changeLanguage(language) }, [language, i18n])
+  useEffect(() => { analytics.track('page_view', { path: location.pathname }) }, [location.pathname])
 
-  // Default profile
-  const profile: UserProfile = auth.user ? {
-    name: auth.user.name,
-    birthDate: auth.user.birthDate || '',
-    birthTime: auth.user.birthTime || '',
-    birthPlace: auth.user.birthPlace || ''
-  } : {
-    name: 'Guest',
-    birthDate: '',
-    birthTime: '',
-    birthPlace: ''
-  }
+  const profile: UserProfile = auth.user
+    ? { name: auth.user.name, birthDate: auth.user.birthDate || '', birthTime: auth.user.birthTime || '', birthPlace: auth.user.birthPlace || '' }
+    : { name: 'Guest', birthDate: '', birthTime: '', birthPlace: '' }
 
   const isPremium = auth.user?.subscriptionTier === 'premium'
 
-  const handleNavigate = (tab: string, arg?: any) => {
-    setActiveTab(tab)
-  }
-
-  const handleTogglePremium = () => {
-    // TODO: Implement premium toggle
-    console.log('Toggle premium')
-  }
-
   const handleChangeProfile = async (newProfile: UserProfile) => {
     if (auth.user) {
-      setUser({
-        ...auth.user,
-        name: newProfile.name,
-        birthDate: newProfile.birthDate,
-        birthTime: newProfile.birthTime,
-        birthPlace: newProfile.birthPlace
-      })
-      try {
-        await api.updateProfile({
-          name: newProfile.name,
-          birthDate: newProfile.birthDate,
-          birthTime: newProfile.birthTime,
-          birthPlace: newProfile.birthPlace,
-        })
-      } catch (e) {
-        console.error('Failed to persist profile:', e)
-      }
+      setUser({ ...auth.user, ...newProfile })
+      try { await api.updateProfile(newProfile) } catch (e) { console.error('Failed to persist profile:', e) }
     }
-  }
-
-  const handleAddJournal = (journal: any) => {
-    // TODO: Implement add journal
-    console.log('Add journal', journal)
-  }
-
-  const handleDeleteJournal = (id: string) => {
-    // TODO: Implement delete journal
-    console.log('Delete journal', id)
   }
 
   return (
-    <div className={`min-h-screen bg-temple-dark text-temple-cream ${largeTextMode ? 'text-lg' : 'text-base'}`}>
-      {/* Main content */}
-      <main className="pb-20">
-        {activeTab === 'home' && (
-          <HomeView
-            profile={profile}
-            onNavigate={handleNavigate}
-            isPremium={isPremium}
-            onTogglePremium={handleTogglePremium}
-            largeTextMode={largeTextMode}
-          />
-        )}
-        {activeTab === 'discover' && (
-          <DiscoverView
-            profile={profile}
-            isPremium={isPremium}
-            onNavigate={handleNavigate}
-            largeTextMode={largeTextMode}
-          />
-        )}
-        {activeTab === 'chat' && (
-          <ChatView
-            profile={profile}
-            isPremium={isPremium}
-          />
-        )}
-        {activeTab === 'healing' && (
-          <HealingView />
-        )}
-        {activeTab === 'community' && (
-          <CommunityView
-            profile={profile}
-          />
-        )}
-        {activeTab === 'marketplace' && (
-          <MarketplaceView
-            profile={profile}
-          />
-        )}
-        {activeTab === 'profile' && (
-          <ProfileView
-            profile={profile}
-            onChangeProfile={handleChangeProfile}
-            isPremium={isPremium}
-            onTogglePremium={handleTogglePremium}
-            tarotReadingsHistory={[]}
-            onChangeLanguage={setLanguage}
-          />
-        )}
-      </main>
-
-      {/* Bottom navigation */}
-      <Navigation activeTab={activeTab} onTabChange={setActiveTab} />
-    </div>
+    <LayoutCtx.Provider value={{ profile, isPremium, handleChangeProfile, setLanguage }}>
+      <div className={`min-h-screen bg-temple-dark text-temple-cream ${largeTextMode ? 'text-lg' : 'text-base'}`}>
+        <main className="pb-20">
+          <Outlet />
+        </main>
+        <Navigation />
+      </div>
+    </LayoutCtx.Provider>
   )
 }
 
-// Root component
-export default function App() {
-  const { hasOnboarded, setHasOnboarded, language, setLanguage, auth, logout, setUser } = useStore()
+// ─── Route components ────────────────────────────────────────────────────
 
-  // Load saved language
+function HomeRoute() {
+  const { profile, isPremium } = useContext(LayoutCtx)
+  return <HomeView profile={profile} onNavigate={() => {}} isPremium={isPremium} onTogglePremium={() => {}} />
+}
+
+function DiscoverRoute() {
+  const { profile, isPremium } = useContext(LayoutCtx)
+  return <DiscoverView profile={profile} isPremium={isPremium} onNavigate={() => {}} />
+}
+
+function ChatRoute() {
+  const { profile, isPremium } = useContext(LayoutCtx)
+  return <ChatView profile={profile} isPremium={isPremium} />
+}
+
+function HealingRoute() {
+  return <HealingView />
+}
+
+function CommunityRoute() {
+  const { profile } = useContext(LayoutCtx)
+  return <CommunityView profile={profile} />
+}
+
+function MarketplaceRoute() {
+  const { profile } = useContext(LayoutCtx)
+  return <MarketplaceView profile={profile} />
+}
+
+function ProfileRoute() {
+  const { profile, isPremium, handleChangeProfile, setLanguage } = useContext(LayoutCtx)
+  return (
+    <ProfileView
+      profile={profile}
+      onChangeProfile={handleChangeProfile}
+      isPremium={isPremium}
+      onTogglePremium={() => {}}
+      tarotReadingsHistory={[]}
+      onChangeLanguage={setLanguage}
+    />
+  )
+}
+
+// ─── Root ────────────────────────────────────────────────────────────────
+
+export default function App() {
+  const { hasOnboarded, setHasOnboarded, setLanguage, auth, logout, setUser } = useStore()
+
   useEffect(() => {
-    const savedLang = localStorage.getItem('soulai_language')
-    if (savedLang) {
-      setLanguage(savedLang)
-    }
+    const saved = localStorage.getItem('soulai_language')
+    if (saved) setLanguage(saved)
   }, [setLanguage])
 
-  // Initialize analytics
   useEffect(() => {
     analytics.init(() => useStore.getState().auth.token)
     return () => analytics.destroy()
   }, [])
 
-  // Validate persisted auth token on app load
   useEffect(() => {
     if (auth.isAuthenticated && auth.token) {
       api.getMe()
         .then((data) => {
           if (data.user) {
             setUser(data.user)
-            // Derive onboarding state from backend profile
-            if (data.user.birthDate) {
-              setHasOnboarded(true)
-            }
+            if (data.user.birthDate) setHasOnboarded(true)
           }
         })
-        .catch(() => {
-          logout()
-          setHasOnboarded(false)
-        })
+        .catch(() => { logout(); setHasOnboarded(false) })
     }
-  }, []) // Only on mount
+  }, [])
 
   return (
     <QueryClientProvider client={queryClient}>
       <Router>
         <Routes>
-          {/* Auth routes */}
-          <Route path="/login" element={<AuthPages />} />
-          <Route path="/register" element={<AuthPages />} />
+          <Route path="/login" element={<AuthPage />} />
+          <Route path="/register" element={<AuthPage />} />
 
-          {/* Onboarding route */}
-          <Route
-            path="/onboarding"
-            element={
-              !auth.isAuthenticated ? (
-                <Navigate to="/login" replace />
-              ) : hasOnboarded ? (
-                <Navigate to="/" replace />
-              ) : (
-                <OnboardingView 
-                  onComplete={async (profile) => {
-                    setHasOnboarded(true)
-                    // Save birth profile to backend
-                    try {
-                      await api.updateProfile({
-                        name: profile.name,
-                        birthDate: profile.birthDate,
-                        birthTime: profile.birthTime,
-                        birthPlace: profile.birthPlace,
-                      })
-                      // Refresh user data
-                      const meData = await api.getMe()
-                      if (meData.user) setUser(meData.user)
-                    } catch (e) {
-                      console.error('Failed to save onboarding profile:', e)
-                    }
-                  }} 
-                />
-              )
-            }
-          />
+          <Route path="/onboarding" element={
+            !auth.isAuthenticated ? <Navigate to="/login" replace />
+            : hasOnboarded ? <Navigate to="/" replace />
+            : <OnboardingView onComplete={async (profile) => {
+                setHasOnboarded(true)
+                try {
+                  await api.updateProfile(profile)
+                  const me = await api.getMe()
+                  if (me.user) setUser(me.user)
+                } catch (e) { console.error('Failed to save onboarding:', e) }
+              }} />
+          } />
 
-          {/* Deep link routes - set active tab and render app */}
-          <Route
-            path="/discover/:module"
-            element={
-              <ProtectedRoute>
-                <DeepLinkHandler targetTab="discover">
-                  <AppLayout />
-                </DeepLinkHandler>
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/profile/subscription"
-            element={
-              <ProtectedRoute>
-                <DeepLinkHandler targetTab="profile">
-                  <AppLayout />
-                </DeepLinkHandler>
-              </ProtectedRoute>
-            }
-          />
+          <Route path="/payment/success" element={
+            <ProtectedRoute><PaymentSuccessPage /></ProtectedRoute>
+          } />
 
-          {/* Payment success callback */}
-          <Route
-            path="/payment/success"
-            element={
-              <ProtectedRoute>
-                <PaymentSuccessPage />
-              </ProtectedRoute>
-            }
-          />
+          {/* App shell with nested tab routes */}
+          <Route element={<OnboardingGuard><AppLayout /></OnboardingGuard>}>
+            <Route index element={<HomeRoute />} />
+            <Route path="discover" element={<DiscoverRoute />} />
+            <Route path="discover/:module" element={<DiscoverRoute />} />
+            <Route path="chat" element={<ChatRoute />} />
+            <Route path="healing" element={<HealingRoute />} />
+            <Route path="community" element={<CommunityRoute />} />
+            <Route path="marketplace" element={<MarketplaceRoute />} />
+            <Route path="profile" element={<ProfileRoute />} />
+            <Route path="profile/subscription" element={<ProfileRoute />} />
+          </Route>
 
-          {/* Protected routes */}
-          <Route
-            path="/*"
-            element={
-              <ProtectedRoute>
-                {hasOnboarded ? (
-                  <AppLayout />
-                ) : (
-                  <Navigate to="/onboarding" replace />
-                )}
-              </ProtectedRoute>
-            }
-          />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
 
-      {/* Toast notifications */}
-      <Toaster
-        position="top-center"
-        toastOptions={{
-          style: {
-            background: '#1e293b',
-            color: '#f1f5f9',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-          },
-        }}
-      />
+      <Toaster position="top-center" toastOptions={{
+        style: { background: '#1e293b', color: '#f1f5f9', border: '1px solid rgba(255,255,255,0.1)' },
+      }} />
     </QueryClientProvider>
   )
 }

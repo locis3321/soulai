@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react'
 import { motion } from 'motion/react'
 import { CheckCircle, Loader2, Crown } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 import { useStore } from '../lib/store'
 import { api } from '../lib/api'
 
 export default function PaymentSuccessPage() {
   const { t } = useTranslation()
-  const { setUser, setActiveTab } = useStore()
+  const navigate = useNavigate()
+  const { setUser } = useStore()
   const [checking, setChecking] = useState(true)
   const [subscription, setSubscription] = useState<any>(null)
 
@@ -58,7 +60,7 @@ export default function PaymentSuccessPage() {
               <p className="text-slate-400 text-xs">{t('payment.planActive', { tier })}</p>
             </div>
             <button
-              onClick={() => setActiveTab('home')}
+              onClick={() => navigate('/')}
               className="w-full py-3 bg-[#7C5CFF] hover:bg-[#6D4AFF] text-white text-sm font-mono font-bold rounded-xl transition-all cursor-pointer"
             >
               {t('payment.continueToApp')}
@@ -72,7 +74,7 @@ export default function PaymentSuccessPage() {
             <h2 className="font-display text-xl font-bold text-slate-100">{t('payment.pending')}</h2>
             <p className="text-slate-400 text-sm">{t('payment.pendingDesc')}</p>
             <button
-              onClick={() => setActiveTab('profile')}
+              onClick={() => navigate('/profile')}
               className="w-full py-3 bg-[#7C5CFF] hover:bg-[#6D4AFF] text-white text-sm font-mono font-bold rounded-xl transition-all cursor-pointer"
             >
               {t('payment.checkStatus')}

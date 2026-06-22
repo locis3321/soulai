@@ -33,9 +33,6 @@ export interface AppState {
   logout: () => void
 
   // UI State
-  activeTab: string
-  setActiveTab: (tab: string) => void
-  
   language: string
   setLanguage: (lang: string) => void
   
@@ -97,9 +94,6 @@ export const useStore = create<AppState>()(
         }),
 
       // UI State
-      activeTab: 'home',
-      setActiveTab: (tab) => set({ activeTab: tab }),
-      
       language: 'zh',
       setLanguage: (lang) => set({ language: lang }),
       
@@ -117,7 +111,6 @@ export const useStore = create<AppState>()(
           token: state.auth.token,
           isAuthenticated: state.auth.isAuthenticated,
         },
-        activeTab: state.activeTab,
         language: state.language,
         largeTextMode: state.largeTextMode,
         hasOnboarded: state.hasOnboarded,
