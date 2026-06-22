@@ -1,27 +1,25 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  User, 
-  Star, 
-  Crown, 
-  History, 
-  FileText, 
-  CheckCircle2, 
-  Globe, 
-  Shield, 
-  Info, 
-  LogOut, 
-  LogIn, 
-  ChevronDown, 
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  User,
+  Crown,
+  History,
+  FileText,
+  CheckCircle2,
+  Globe,
+  Shield,
+  Info,
+  LogOut,
+  ChevronDown,
   ChevronRight,
-  Sparkles
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { UserProfile, TarotCardSpread } from "../types";
 import { LANGUAGES } from "../lib/translations";
+import { useStore } from "../lib/store";
 import SubscriptionPage from "./SubscriptionPage";
 
 interface ProfileViewProps {
@@ -46,6 +44,9 @@ export default function ProfileView({
   largeTextMode = false
 }: ProfileViewProps) {
   const { t, i18n } = useTranslation();
+  const { auth, logout } = useStore();
+
+  const sizeClass = (normal: string, large: string) => largeTextMode ? large : normal;
 
   // Form states
   const [name, setName] = useState(profile.name);
@@ -53,6 +54,7 @@ export default function ProfileView({
   const [birthTime, setBirthTime] = useState(profile.birthTime);
   const [birthPlace, setBirthPlace] = useState(profile.birthPlace);
   const [calibrateMsg, setCalibrateMsg] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   // Layout Accordion state triggers
   const [showLanguageCollapse, setShowLanguageCollapse] = useState(false);
@@ -62,44 +64,25 @@ export default function ProfileView({
   const [showSubscription, setShowSubscription] = useState(false);
   const [showAboutCollapse, setShowAboutCollapse] = useState(false);
 
-  // Authentication simulation
-  const [userEmail, setUserEmail] = useState<string>(() => {
-    return localStorage.getItem("soul_auth_email") || "housmanthay@gmail.com";
-  });
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
-    return localStorage.getItem("soul_is_logged_in") !== "false"; // default to true to reflect active user mail
-  });
+  const userEmail = auth.user?.email || "";
+  const isLoggedIn = auth.isAuthenticated;
 
-  // Login inputs
-  const [inputEmail, setInputEmail] = useState("");
-  const [inputPassword, setInputPassword] = useState("");
-  const [authMsg, setAuthMsg] = useState<string | null>(null);
-
-  const handleProfileSubmit = (e: React.FormEvent) => {
+  const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onChangeProfile({ name, birthDate, birthTime, birthPlace });
-    setCalibrateMsg("✓ Calibrated! Western and Eastern Natal coordinates updated beautifully.");
-    setTimeout(() => setCalibrateMsg(null), 4000);
+    setSaving(true);
+    try {
+      await onChangeProfile({ name, birthDate, birthTime, birthPlace });
+      setCalibrateMsg("✓ Calibrated! Natal coordinates updated.");
+    } catch {
+      setCalibrateMsg("Failed to save. Please try again.");
+    } finally {
+      setSaving(false);
+      setTimeout(() => setCalibrateMsg(null), 4000);
+    }
   };
 
   const handleLogout = () => {
-    setIsLoggedIn(false);
-    localStorage.setItem("soul_is_logged_in", "false");
-    setAuthMsg(t('profile.logoutSuccess'));
-    setTimeout(() => setAuthMsg(null), 4000);
-  };
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    const targetedEmail = inputEmail.trim() || "housmanthay@gmail.com";
-    setUserEmail(targetedEmail);
-    localStorage.setItem("soul_auth_email", targetedEmail);
-    setIsLoggedIn(true);
-    localStorage.setItem("soul_is_logged_in", "true");
-    setAuthMsg(t('profile.loginSuccess'));
-    setInputEmail("");
-    setInputPassword("");
-    setTimeout(() => setAuthMsg(null), 4000);
+    logout();
   };
 
   // Helper dynamic western astrology calculation
@@ -116,7 +99,7 @@ export default function ProfileView({
     if ((m === 6 && d >= 21) || (m === 7 && d <= 22)) return { sign: "Cancer", symbol: "♋", trait: "Lunar intuitive emotional sanctuary." };
     if ((m === 7 && d >= 23) || (m === 8 && d <= 22)) return { sign: "Leo", symbol: "♌", trait: "Radiant solar creative leader." };
     if ((m === 8 && d >= 23) || (m === 9 && d <= 22)) return { sign: "Virgo", symbol: "♍", trait: "Sacred meticulous Earth healer." };
-    if ((m === 9 && d >= 23) || (m === 10 && d <= 22)) return { sign: "Libra", symbol: "♎", tracking: "Harmonic spiritual balancing." };
+    if ((m === 9 && d >= 23) || (m === 10 && d <= 22)) return { sign: "Libra", symbol: "♎", trait: "Harmonic spiritual balancing." };
     if ((m === 10 && d >= 23) || (m === 11 && d <= 21)) return { sign: "Scorpio", symbol: "♏", trait: "Transmuter of dense mysteries." };
     if ((m === 11 && d >= 22) || (m === 12 && d <= 21)) return { sign: "Sagittarius", symbol: "♐", trait: "Philosophical cosmic voyager." };
     if ((m === 12 && d >= 22) || (m === 1 && d <= 19)) return { sign: "Capricorn", symbol: "♑", trait: "Architect of sovereign Earth cycles." };
@@ -131,26 +114,17 @@ export default function ProfileView({
     if (isNaN(year)) return { sign: "Unknown", symbol: "🐉" };
 
     const animals = [
-      { name: "Rat", emoji: "🐭" },
-      { name: "Ox", emoji: "🐮" },
-      { name: "Tiger", emoji: "🐯" },
-      { name: "Rabbit", emoji: "🐰" },
-      { name: "Dragon", emoji: "🐉" },
-      { name: "Snake", emoji: "🐍" },
-      { name: "Horse", emoji: "🐴" },
-      { name: "Goat", emoji: "🐐" },
-      { name: "Monkey", emoji: "🐵" },
-      { name: "Rooster", emoji: "🐔" },
-      { name: "Dog", emoji: "🐶" },
-      { name: "Pig", emoji: "🐷" }
+      { name: "Rat", emoji: "🐭" }, { name: "Ox", emoji: "🐮" },
+      { name: "Tiger", emoji: "🐯" }, { name: "Rabbit", emoji: "🐰" },
+      { name: "Dragon", emoji: "🐉" }, { name: "Snake", emoji: "🐍" },
+      { name: "Horse", emoji: "🐴" }, { name: "Goat", emoji: "🐐" },
+      { name: "Monkey", emoji: "🐵" }, { name: "Rooster", emoji: "🐔" },
+      { name: "Dog", emoji: "🐶" }, { name: "Pig", emoji: "🐷" }
     ];
 
     const offset = (year - 1900) % 12;
     const index = offset < 0 ? (offset + 12) % 12 : offset;
-    return {
-      sign: animals[index].name,
-      symbol: animals[index].emoji
-    };
+    return { sign: animals[index].name, symbol: animals[index].emoji };
   };
 
   const sunSign = getSunSignInfo(birthDate);
@@ -158,16 +132,15 @@ export default function ProfileView({
 
   return (
     <div className="space-y-6" id="optimized-profile-screen">
-      
-      {/* 2. CONCISE BRIEF USER PROFILE CARD (简洁的用户信息) */}
-      <div 
+
+      {/* User Profile Card */}
+      <div
         className="relative bg-gradient-to-br from-[#121633] to-[#0A0D21] border border-white/5 rounded-3xl p-5 overflow-hidden shadow-2xl"
         id="concise-mobile-profile-card"
       >
         <div className="absolute top-[-40px] right-[-40px] w-28 h-28 bg-[#7C5CFF]/15 rounded-full blur-3xl" />
-        
+
         <div className="flex items-center gap-4">
-          {/* Glowing Natal Crest Avatar */}
           <div className="relative flex items-center justify-center shrink-0">
             <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-[#7C5CFF] via-[#A78BFA] to-[#FFD166] p-[2.5px] shadow-[0_0_15px_rgba(124,92,255,0.35)]">
               <div className="w-full h-full rounded-full bg-[#090C1F] flex items-center justify-center text-3xl">
@@ -179,13 +152,12 @@ export default function ProfileView({
             </div>
           </div>
 
-          {/* User descriptions name & sync level */}
           <div className="space-y-1">
-            <span className="font-mono text-[8px] uppercase tracking-widest text-glow font-bold">
+            <span className={sizeClass("font-mono text-[8px] uppercase tracking-widest text-glow font-bold", "font-mono text-[10px] uppercase tracking-widest text-glow font-bold")}>
               {isPremium ? t('levelPremium') : t('levelNovice')}
             </span>
-            <h2 className="font-display font-black text-slate-100 text-lg flex items-center gap-1.5 leading-none">
-              {profile.name || "Mia"}
+            <h2 className={sizeClass("font-display font-black text-slate-100 text-lg flex items-center gap-1.5 leading-none", "font-display font-black text-slate-100 text-xl flex items-center gap-1.5 leading-none")}>
+              {profile.name || "Seeker"}
               {isPremium && <Crown className="h-4 w-4 text-glow" />}
             </h2>
             <p className="text-[10px] font-mono text-slate-400">
@@ -194,7 +166,6 @@ export default function ProfileView({
           </div>
         </div>
 
-        {/* Horizontal micro-chips showing coordinates calculated */}
         <div className="grid grid-cols-2 gap-2 mt-4 pt-3.5 border-t border-white/[0.04]">
           <div className="bg-white/[0.012] border border-white/5 p-2 rounded-xl text-left">
             <span className="block font-mono text-[7px] text-slate-500 uppercase tracking-widest leading-none mb-1">{t('sunSignLabel')}</span>
@@ -236,20 +207,10 @@ export default function ProfileView({
         )}
       </div>
 
-      {authMsg && (
-        <motion.div 
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-indigo-950/40 border border-[#7C5CFF]/30 text-slate-200 text-[10px] py-2 px-3 rounded-xl font-mono text-center flex items-center justify-center gap-1.5"
-        >
-          <Sparkles className="h-3 w-3 text-glow" /> {authMsg}
-        </motion.div>
-      )}
-
-      {/* 3. SETTINGS CELLS / OPTION ACCORDIONS (必要的系统控制按钮) */}
+      {/* Settings Cells */}
       <div className="space-y-2.5" id="native-app-settings-menu">
-        
-        {/* 3.1 LANGUAGE SWITCH CELL */}
+
+        {/* Language Switch */}
         <div className="border border-white/5 bg-[#11162E] rounded-2xl overflow-hidden transition-all">
           <button
             type="button"
@@ -287,8 +248,8 @@ export default function ProfileView({
                         setShowLanguageCollapse(false);
                       }}
                       className={`cursor-pointer w-full p-2.5 rounded-xl text-left flex items-center justify-between border transition-all ${
-                        i18n.language === l.key 
-                          ? "bg-[#7C5CFF]/20 text-[#FFD166] border-[#7C5CFF]/45 shadow-sm" 
+                        i18n.language === l.key
+                          ? "bg-[#7C5CFF]/20 text-[#FFD166] border-[#7C5CFF]/45 shadow-sm"
                           : "bg-white/[0.01] text-slate-400 border-transparent hover:bg-white/[0.03]"
                       }`}
                     >
@@ -305,27 +266,9 @@ export default function ProfileView({
           </AnimatePresence>
         </div>
 
-        {/* 3.2 LOGIN / LOGOUT ACCOUNT SYNCHRONIZATION */}
+        {/* Account Section */}
         <div className="border border-white/5 bg-[#11162E] rounded-2xl overflow-hidden transition-all">
-          <button
-            type="button"
-            onClick={() => {
-              // Toggle accordion
-              setIsLoggedIn(prev => {
-                if (prev) {
-                  // If logged in, let clicking expand options instead of immediate logouts
-                  return prev;
-                }
-                return prev;
-              });
-              // Always toggle view
-              setShowHistoryCollapse(false); // keep other shut
-              setShowCalibrateCollapse(false);
-              setShowAboutCollapse(false);
-              setShowPrivacyCollapse(false);
-            }}
-            className="w-full flex items-center justify-between p-4 outline-none"
-          >
+          <div className="w-full flex items-center justify-between p-4">
             <div className="flex items-center gap-3">
               <div className={`w-8 h-8 rounded-xl flex items-center justify-center ${isLoggedIn ? "bg-teal-500/15 text-teal-400" : "bg-red-500/10 text-red-400"}`}>
                 {isLoggedIn ? <CheckCircle2 className="h-4 w-4" /> : <LogOut className="h-4 w-4" />}
@@ -335,71 +278,24 @@ export default function ProfileView({
                   {isLoggedIn ? t('profile.activeAccount') : t('profile.guestMode')}
                 </span>
                 <span className="font-mono text-[9px] text-slate-500 leading-none">
-                  {isLoggedIn ? userEmail : t('profile.loginDesc').slice(0, 48) + "..."}
+                  {isLoggedIn ? userEmail : t('profile.loginDesc')}
                 </span>
               </div>
             </div>
-            
-            <div className="flex items-center gap-2">
-              {isLoggedIn ? (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleLogout();
-                  }}
-                  className="cursor-pointer px-2.5 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-[10px] font-mono rounded-lg border border-red-500/20 transition-all font-semibold"
-                >
-                  {t('profile.logout')}
-                </button>
-              ) : (
-                <span className="text-xs text-[#7C5CFF] font-semibold font-mono uppercase">{t('profile.login').split(" ")[0]}</span>
-              )}
-            </div>
-          </button>
 
-          {/* Interactive Login UI if not logged in */}
-          {!isLoggedIn && (
-            <div className="bg-[#0A0D22] border-t border-white/[0.03] p-4 font-sans space-y-3">
-              <p className="text-[10px] text-slate-400 leading-relaxed">
-                {t('profile.loginDesc')} <span className="text-glow">{t('profile.enterAny')}</span>
-              </p>
-              
-              <form onSubmit={handleLogin} className="space-y-2.5">
-                <div>
-                  <label className="block text-[8px] font-mono text-slate-500 uppercase tracking-widest mb-1">{t('fullNameLabel')} Email</label>
-                  <input
-                    type="email"
-                    required
-                    value={inputEmail}
-                    onChange={(e) => setInputEmail(e.target.value)}
-                    placeholder="e.g. pilgrim-sync@soul.ai"
-                    className="w-full bg-[#090C1F] border border-white/10 rounded-xl px-3 py-1.5 text-slate-200 text-xs focus:outline-none focus:border-star"
-                  />
-                </div>
-                <div>
-                  <label className="block text-[8px] font-mono text-slate-500 uppercase tracking-widest mb-1">{t('profile.secLogin')}</label>
-                  <input
-                    type="password"
-                    required
-                    value={inputPassword}
-                    onChange={(e) => setInputPassword(e.target.value)}
-                    placeholder="••••••••"
-                    className="w-full bg-[#090C1F] border border-white/10 rounded-xl px-3 py-1.5 text-slate-200 text-xs focus:outline-none"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="cursor-pointer w-full bg-[#7C5CFF]/30 hover:bg-[#7C5CFF]/50 text-slate-100 font-mono text-[10px] font-bold py-1.5 rounded-xl border border-[#7C5CFF]/30 transition"
-                >
-                  🔑 {t('profile.login')}
-                </button>
-              </form>
-            </div>
-          )}
+            {isLoggedIn && (
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="cursor-pointer px-2.5 py-1 bg-red-500/10 hover:bg-red-500/20 text-red-400 text-[10px] font-mono rounded-lg border border-red-500/20 transition-all font-semibold"
+              >
+                {t('profile.logout')}
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* 3.3 COLLAPSIBLE CALIBRATE METRICS (校准出生三昧参数) */}
+        {/* Calibrate Birth Profile */}
         <div className="border border-white/5 bg-[#11162E] rounded-2xl overflow-hidden transition-all">
           <button
             type="button"
@@ -413,7 +309,7 @@ export default function ProfileView({
               <div className="text-left">
                 <span className="block text-slate-200 text-xs font-semibold leading-tight">{t('profile.calibrateLabel')}</span>
                 <span className="font-mono text-[9px] text-slate-400 truncate max-w-[200px] block">
-                  {profile.birthDate} • {profile.birthPlace || "No Coordinates"}
+                  {profile.birthDate || 'No date'} • {profile.birthPlace || "No Coordinates"}
                 </span>
               </div>
             </div>
@@ -443,7 +339,7 @@ export default function ProfileView({
                       required
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      placeholder="Mia"
+                      placeholder="Your name"
                       className="w-full bg-[#090C1F] border border-white/10 rounded-xl px-3 py-1.5 text-slate-200 text-xs focus:outline-none focus:border-glow"
                     />
                   </div>
@@ -458,7 +354,7 @@ export default function ProfileView({
                         required
                         value={birthDate}
                         onChange={(e) => setBirthDate(e.target.value)}
-                        className="w-full bg-[#090C1F] border border-white/10 rounded-xl px-3 py-1 px-1.5 text-slate-200 text-[10px] focus:outline-none"
+                        className="w-full bg-[#090C1F] border border-white/10 rounded-xl px-3 py-1.5 text-slate-200 text-[10px] focus:outline-none"
                       />
                     </div>
                     <div>
@@ -469,7 +365,7 @@ export default function ProfileView({
                         type="time"
                         value={birthTime}
                         onChange={(e) => setBirthTime(e.target.value)}
-                        className="w-full bg-[#090C1F] border border-white/10 rounded-xl px-3 py-1 px-1.5 text-slate-200 text-[10px] focus:outline-none"
+                        className="w-full bg-[#090C1F] border border-white/10 rounded-xl px-3 py-1.5 text-slate-200 text-[10px] focus:outline-none"
                       />
                     </div>
                   </div>
@@ -489,9 +385,10 @@ export default function ProfileView({
 
                   <button
                     type="submit"
-                    className="cursor-pointer w-full mt-2 bg-[#7C5CFF] hover:bg-[#6D4AFF] text-slate-100 font-mono text-[10.5px] py-1.5 rounded-xl transition duration-200"
+                    disabled={saving}
+                    className="cursor-pointer w-full mt-2 bg-[#7C5CFF] hover:bg-[#6D4AFF] disabled:opacity-50 text-slate-100 font-mono text-[10.5px] py-1.5 rounded-xl transition duration-200"
                   >
-                    {t('calibrateButtonText')}
+                    {saving ? 'Saving...' : t('calibrateButtonText')}
                   </button>
                 </form>
 
@@ -500,14 +397,14 @@ export default function ProfileView({
                   onClick={onRestartOnboarding}
                   className="w-full mt-3 py-1.5 rounded-xl text-[9px] font-mono bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 border border-rose-500/20 transition cursor-pointer"
                 >
-                  🔄 {t('profile.title').startsWith("Soul") ? "Restart Sacred Journey" : "重置心灵入门旅程"}
+                  🔄 {t('profile.restartOnboarding')}
                 </button>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
 
-        {/* 3.4 COLLAPSIBLE NATIVE HISTORY LOG (因果问卜历史记录) */}
+        {/* Divination History */}
         <div className="border border-white/5 bg-[#11162E] rounded-2xl overflow-hidden transition-all">
           <button
             type="button"
@@ -544,15 +441,10 @@ export default function ProfileView({
                 ) : (
                   <div className="space-y-3">
                     {tarotReadingsHistory.map((rep, idx) => (
-                      <div
-                        key={idx}
-                        className="bg-[#090D1C] border border-white/5 p-3 rounded-xl space-y-1.5"
-                      >
+                      <div key={idx} className="bg-[#090D1C] border border-white/5 p-3 rounded-xl space-y-1.5">
                         <div className="flex justify-between items-start">
                           <div>
-                            <span className="font-mono text-[8px] text-[#A78BFA] uppercase">
-                              {rep.timestamp}
-                            </span>
+                            <span className="font-mono text-[8px] text-[#A78BFA] uppercase">{rep.timestamp}</span>
                             <h4 className="font-display font-semibold text-slate-200 text-xs truncate max-w-[210px]">
                               &ldquo;{rep.question}&rdquo;
                             </h4>
@@ -565,15 +457,10 @@ export default function ProfileView({
                             ))}
                           </div>
                         </div>
-
                         <div className="p-2.5 bg-[#11162E]/25 border border-white/[0.02] rounded-lg max-h-36 overflow-y-auto text-slate-300 text-[10px] leading-relaxed font-sans">
                           {rep.readingText.split("\n").map((line, lIdx) => {
-                            if (line.startsWith("###")) {
-                              return <h4 key={lIdx} className="font-display text-[10px] text-glow font-bold mt-1 mb-0.5">{line.replace("###", "")}</h4>;
-                            }
-                            if (line.startsWith("##")) {
-                              return <h3 key={lIdx} className="font-display text-[10.5px] text-star font-bold mt-2 mb-1">{line.replace("##", "")}</h3>;
-                            }
+                            if (line.startsWith("###")) return <h4 key={lIdx} className="font-display text-[10px] text-glow font-bold mt-1 mb-0.5">{line.replace("###", "")}</h4>;
+                            if (line.startsWith("##")) return <h3 key={lIdx} className="font-display text-[10.5px] text-star font-bold mt-2 mb-1">{line.replace("##", "")}</h3>;
                             return <p key={lIdx} className="mb-0.5">{line}</p>;
                           })}
                         </div>
@@ -586,7 +473,7 @@ export default function ProfileView({
           </AnimatePresence>
         </div>
 
-        {/* 3.5 NATIVE COMPLIANT PRIVACY POLICY (隐私协议) */}
+        {/* Privacy Policy */}
         <div className="border border-white/5 bg-[#11162E] rounded-2xl overflow-hidden transition-all">
           <button
             type="button"
@@ -599,7 +486,7 @@ export default function ProfileView({
               </div>
               <div className="text-left">
                 <span className="block text-slate-200 text-xs font-semibold leading-tight">{t('profile.privacyTitle')}</span>
-                <span className="font-mono text-[9px] text-slate-500">Security & GDPR compliant terms</span>
+                <span className="font-mono text-[9px] text-slate-500">GDPR compliant</span>
               </div>
             </div>
             {showPrivacyCollapse ? <ChevronDown className="h-4 w-4 text-slate-500" /> : <ChevronRight className="h-4 w-4 text-slate-500" />}
@@ -615,16 +502,13 @@ export default function ProfileView({
               >
                 <p className="font-bold text-slate-300">🔐 {t('profile.privacyTitle')}</p>
                 <p>{t('profile.privacyText')}</p>
-                <p className="border-t border-white/5 pt-2 text-[9.5px] text-slate-500 font-mono">
-                  Encryption Layer: SHA-256 Local Encrypted Client Shell Storage.<br />
-                  Data Server: Private Cloud Run Ingress Tunnel.
-                </p>
+                <p className="text-[9px] text-slate-500">You may export or delete all your data at any time via the Privacy section.</p>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
 
-        {/* 3.6 ABOUT SANCTUARY & VERSION (关于我们以及版本) */}
+        {/* About */}
         <div className="border border-white/5 bg-[#11162E] rounded-2xl overflow-hidden transition-all">
           <button
             type="button"
@@ -637,7 +521,7 @@ export default function ProfileView({
               </div>
               <div className="text-left">
                 <span className="block text-slate-200 text-xs font-semibold leading-tight">{t('profile.aboutTitle')}</span>
-                <span className="font-mono text-[9px] text-slate-500">{t('profile.appModel')} • Details</span>
+                <span className="font-mono text-[9px] text-slate-500">{t('profile.appModel')} • v1.0</span>
               </div>
             </div>
             {showAboutCollapse ? <ChevronDown className="h-4 w-4 text-slate-500" /> : <ChevronRight className="h-4 w-4 text-slate-500" />}
@@ -656,16 +540,12 @@ export default function ProfileView({
                   <span>{t('profile.appModel')}</span>
                 </div>
                 <p>{t('profile.aboutText')}</p>
-                <p className="bg-[#11162E]/20 p-2.5 rounded-lg border border-white/5 text-[9.5px] font-mono text-[#7C5CFF]">
-                  🎮 {t('profile.platformSpec')}
-                </p>
               </motion.div>
             )}
           </AnimatePresence>
         </div>
 
       </div>
-
     </div>
   );
 }

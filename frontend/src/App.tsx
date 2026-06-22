@@ -109,7 +109,7 @@ function AppLayout() {
     console.log('Toggle premium')
   }
 
-  const handleChangeProfile = (newProfile: UserProfile) => {
+  const handleChangeProfile = async (newProfile: UserProfile) => {
     if (auth.user) {
       setUser({
         ...auth.user,
@@ -118,6 +118,16 @@ function AppLayout() {
         birthTime: newProfile.birthTime,
         birthPlace: newProfile.birthPlace
       })
+      try {
+        await api.updateProfile({
+          name: newProfile.name,
+          birthDate: newProfile.birthDate,
+          birthTime: newProfile.birthTime,
+          birthPlace: newProfile.birthPlace,
+        })
+      } catch (e) {
+        console.error('Failed to persist profile:', e)
+      }
     }
   }
 
