@@ -70,9 +70,18 @@ router.post('/track/batch', async (req: AuthRequest, res: Response) => {
   }
 })
 
-// Get analytics summary (admin/dev)
+// Get analytics summary (admin only)
 router.get('/summary', async (req: AuthRequest, res: Response) => {
   try {
+    // Admin check: require X-Admin-Key header matching env var, or dev mode
+    const adminKey = process.env.ADMIN_API_KEY
+    const providedKey = req.headers['x-admin-key'] as string
+    const isDev = process.env.NODE_ENV !== 'production'
+
+    if (!isDev && (!adminKey || providedKey !== adminKey)) {
+      return res.status(403).json({ error: 'Admin access required' })
+    }
+
     const days = parseInt(req.query.days as string) || 7
 
     const [events, topEvents, activeUsers] = await Promise.all([
