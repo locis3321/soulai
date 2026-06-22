@@ -1,6 +1,7 @@
 import { Response, NextFunction } from 'express'
 import { AuthRequest } from './auth.js'
 import { db } from '../lib/db.js'
+import { getEffectiveTier } from '../lib/subscription.js'
 
 type SubscriptionTier = 'free' | 'plus' | 'premium'
 
@@ -54,16 +55,8 @@ export function requireTier(minimumTier: SubscriptionTier) {
         return res.status(401).json({ error: 'Authentication required' })
       }
 
-      const result = await db.query(
-        'SELECT subscription_tier FROM users WHERE id = $1',
-        [userId]
-      )
-
-      if (result.rows.length === 0) {
-        return res.status(404).json({ error: 'User not found' })
-      }
-
-      const userTier = (result.rows[0].subscription_tier || 'free') as SubscriptionTier
+      // getEffectiveTier auto-downgrades expired subscriptions
+      const userTier = (await getEffectiveTier(userId)) as SubscriptionTier
       const userTierIndex = TIER_HIERARCHY.indexOf(userTier)
       const requiredTierIndex = TIER_HIERARCHY.indexOf(minimumTier)
 
@@ -97,17 +90,8 @@ export function checkEntitlement(featureKey: string) {
         return next()
       }
 
-      // Get user tier
-      const userResult = await db.query(
-        'SELECT subscription_tier FROM users WHERE id = $1',
-        [userId]
-      )
-
-      if (userResult.rows.length === 0) {
-        return res.status(404).json({ error: 'User not found' })
-      }
-
-      const userTier = (userResult.rows[0].subscription_tier || 'free') as SubscriptionTier
+      // getEffectiveTier auto-downgrades expired subscriptions
+      const userTier = (await getEffectiveTier(userId)) as SubscriptionTier
       const userTierIndex = TIER_HIERARCHY.indexOf(userTier)
       const requiredTierIndex = TIER_HIERARCHY.indexOf(feature.requiredTier)
 

@@ -29,6 +29,7 @@ import marketplaceRoutes from './routes/marketplace.js'
 // Import middleware
 import { errorHandler } from './middleware/errorHandler.js'
 import { authenticateToken } from './middleware/auth.js'
+import { downgradeExpiredSubscriptions } from './lib/subscription.js'
 
 // Load environment variables
 dotenv.config()
@@ -87,6 +88,10 @@ app.use(errorHandler)
 
 // Create HTTP server
 const server = createServer(app)
+
+// Downgrade expired subscriptions on startup and periodically (every hour)
+downgradeExpiredSubscriptions()
+setInterval(downgradeExpiredSubscriptions, 60 * 60 * 1000)
 
 // Start server
 server.listen(PORT, () => {

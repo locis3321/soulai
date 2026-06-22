@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express'
 import { AuthRequest } from '../middleware/auth.js'
 import { db } from '../lib/db.js'
+import { getEffectiveTier } from '../lib/subscription.js'
 import crypto from 'crypto'
 import { z } from 'zod'
 
@@ -169,6 +170,9 @@ router.get('/subscription', async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.userId
 
+    // Check and auto-downgrade if expired
+    const effectiveTier = await getEffectiveTier(userId!)
+
     const result = await db.query(
       `SELECT id, tier, start_date, end_date, is_active, auto_renew
        FROM subscriptions
@@ -194,11 +198,12 @@ router.get('/subscription', async (req: AuthRequest, res: Response) => {
     res.json({
       subscription: {
         id: sub.id,
-        tier: sub.tier,
+        tier: effectiveTier,
         isActive: sub.is_active,
         startDate: sub.start_date,
         endDate: sub.end_date,
-        autoRenew: sub.auto_renew
+        autoRenew: sub.auto_renew,
+        expired: effectiveTier === 'free' && sub.tier !== 'free'
       }
     })
   } catch (error) {
