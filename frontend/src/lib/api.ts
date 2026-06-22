@@ -250,6 +250,63 @@ export const api = {
     const response = await apiClient.post('/payments/subscription/cancel')
     return response.data
   },
+
+  // Community
+  async getCommunityPosts(category?: string, limit = 20, offset = 0) {
+    const response = await apiClient.get('/community/posts', { params: { category, limit, offset } })
+    return response.data
+  },
+
+  async getCommunityPost(postId: string) {
+    const response = await apiClient.get(`/community/posts/${postId}`)
+    return response.data
+  },
+
+  async createCommunityPost(data: { category: string; title: string; content: string }) {
+    const response = await apiClient.post('/community/posts', data)
+    return response.data
+  },
+
+  async addComment(postId: string, content: string) {
+    const response = await apiClient.post(`/community/posts/${postId}/comments`, { content })
+    return response.data
+  },
+
+  async toggleLike(postId: string) {
+    const response = await apiClient.post(`/community/posts/${postId}/like`)
+    return response.data
+  },
+
+  async toggleBookmark(postId: string) {
+    const response = await apiClient.post(`/community/posts/${postId}/bookmark`)
+    return response.data
+  },
+
+  // Marketplace
+  async getPractitioners(category?: string, search?: string) {
+    const response = await apiClient.get('/marketplace/practitioners', { params: { category, search } })
+    return response.data
+  },
+
+  async getPractitioner(id: string) {
+    const response = await apiClient.get(`/marketplace/practitioners/${id}`)
+    return response.data
+  },
+
+  async createBooking(data: { practitionerId: string; bookingDate: string; bookingTime: string; consultationMode: string }) {
+    const response = await apiClient.post('/marketplace/bookings', data)
+    return response.data
+  },
+
+  async getUserBookings() {
+    const response = await apiClient.get('/marketplace/bookings')
+    return response.data
+  },
+
+  async submitReview(practitionerId: string, rating: number, comment?: string) {
+    const response = await apiClient.post(`/marketplace/practitioners/${practitionerId}/reviews`, { rating, comment })
+    return response.data
+  },
 }
 
 export default api

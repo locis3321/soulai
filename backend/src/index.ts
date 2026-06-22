@@ -23,6 +23,8 @@ import memoryRoutes from './routes/memory.js'
 import healthRoutes from './routes/health.js'
 import privacyRoutes from './routes/privacy.js'
 import analyticsRoutes from './routes/analytics.js'
+import communityRoutes from './routes/community.js'
+import marketplaceRoutes from './routes/marketplace.js'
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler.js'
@@ -77,6 +79,8 @@ app.use('/api/payments', authenticateToken, paymentRoutes)
 app.use('/api/memory', authenticateToken, memoryRoutes)
 app.use('/api/privacy', authenticateToken, privacyRoutes)
 app.use('/api/analytics', authenticateToken, analyticsRoutes)
+app.use('/api/community', authenticateToken, communityRoutes)
+app.use('/api/marketplace', authenticateToken, marketplaceRoutes)
 
 // Error handling
 app.use(errorHandler)

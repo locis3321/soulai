@@ -162,6 +162,102 @@ CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id ON subscriptions(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_activity_user_id ON user_activity(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_activity_created_at ON user_activity(created_at);
 
+-- Create community_posts table
+CREATE TABLE IF NOT EXISTS community_posts (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    category VARCHAR(50) NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    content TEXT NOT NULL,
+    likes_count INTEGER DEFAULT 0,
+    comments_count INTEGER DEFAULT 0,
+    is_pinned BOOLEAN DEFAULT false,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create community_comments table
+CREATE TABLE IF NOT EXISTS community_comments (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    post_id UUID REFERENCES community_posts(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create community_likes table
+CREATE TABLE IF NOT EXISTS community_likes (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    post_id UUID REFERENCES community_posts(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(post_id, user_id)
+);
+
+-- Create community_bookmarks table
+CREATE TABLE IF NOT EXISTS community_bookmarks (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    post_id UUID REFERENCES community_posts(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(post_id, user_id)
+);
+
+-- Create practitioners table
+CREATE TABLE IF NOT EXISTS practitioners (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(255) NOT NULL,
+    avatar TEXT,
+    specialties TEXT[],
+    rating DECIMAL(3,2) DEFAULT 0,
+    reviews_count INTEGER DEFAULT 0,
+    experience_years INTEGER DEFAULT 0,
+    location VARCHAR(255),
+    price_per_session DECIMAL(10,2),
+    bio TEXT,
+    languages TEXT[],
+    is_verified BOOLEAN DEFAULT false,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create bookings table
+CREATE TABLE IF NOT EXISTS bookings (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    practitioner_id UUID REFERENCES practitioners(id) ON DELETE CASCADE,
+    booking_date DATE NOT NULL,
+    booking_time TIME NOT NULL,
+    consultation_mode VARCHAR(20) DEFAULT 'text',
+    status VARCHAR(20) DEFAULT 'pending',
+    payment_id UUID REFERENCES payments(id),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create practitioner_reviews table
+CREATE TABLE IF NOT EXISTS practitioner_reviews (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    practitioner_id UUID REFERENCES practitioners(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    booking_id UUID REFERENCES bookings(id),
+    rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    comment TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create indexes for community and marketplace
+CREATE INDEX IF NOT EXISTS idx_community_posts_user_id ON community_posts(user_id);
+CREATE INDEX IF NOT EXISTS idx_community_posts_category ON community_posts(category);
+CREATE INDEX IF NOT EXISTS idx_community_posts_created_at ON community_posts(created_at);
+CREATE INDEX IF NOT EXISTS idx_community_comments_post_id ON community_comments(post_id);
+CREATE INDEX IF NOT EXISTS idx_community_likes_post_id ON community_likes(post_id);
+CREATE INDEX IF NOT EXISTS idx_community_bookmarks_user_id ON community_bookmarks(user_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_user_id ON bookings(user_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_practitioner_id ON bookings(practitioner_id);
+CREATE INDEX IF NOT EXISTS idx_practitioner_reviews_practitioner_id ON practitioner_reviews(practitioner_id);
+
 -- Create function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
