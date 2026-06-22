@@ -20,6 +20,7 @@ import Navigation from './components/Navigation'
 import LoginPage from './components/LoginPage'
 import RegisterPage from './components/RegisterPage'
 import PaymentSuccessPage from './components/PaymentSuccessPage'
+import AdminApp from './admin/AdminApp'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -200,6 +201,9 @@ export default function App() {
           <Route path="/payment/success" element={
             <ProtectedRoute><PaymentSuccessPage /></ProtectedRoute>
           } />
+
+          {/* Admin console (separate auth, no user onboarding guard) */}
+          <Route path="/admin/*" element={<AdminApp />} />
 
           {/* App shell with nested tab routes */}
           <Route element={<OnboardingGuard><AppLayout /></OnboardingGuard>}>
