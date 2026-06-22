@@ -21,33 +21,21 @@ Avoid product language that promises guaranteed outcomes, exact predictions, med
 
 ```text
 /home/weihs/soulai
-├── discusion.md                         # Original product discussion and strategy notes
-├── SoulAI_项目审查与可行性方案.md          # Feasibility and implementation plan
-├── AGENTS.md                            # Agent guidance file
-└── prototype/                           # Current React prototype
-    ├── package.json
-    ├── server.ts                        # Express API + Gemini integration fallback demo server
-    ├── src/
-    │   ├── App.tsx                      # Main app shell and global state
-    │   ├── main.tsx
-    │   ├── types.ts
-    │   ├── index.css
-    │   ├── lib/
-    │   │   ├── constants.ts             # Advisors, meditations, affirmations
-    │   │   ├── tarotData.ts             # Current partial tarot deck data
-    │   │   └── translations.ts          # en / zh / vi / th strings
-    │   └── components/
-    │       ├── HomeView.tsx
-    │       ├── DiscoverView.tsx
-    │       ├── ChatView.tsx
-    │       ├── HealingView.tsx
-    │       ├── CommunityView.tsx
-    │       ├── MarketplaceView.tsx
-    │       ├── ProfileView.tsx
-    │       ├── OnboardingView.tsx
-    │       └── FlippableTarotCard.tsx
-    └── ...
+├── AGENTS.md                            # This file - agent guidance
+├── init.sql                             # Database bootstrap (used by Docker)
+├── docker-compose.yml                   # Docker services (postgres, redis, frontend, backend)
+├── frontend/          ← ACTIVE          # React + Vite frontend (mainline)
+├── backend/           ← ACTIVE          # Express + TypeScript backend (mainline)
+├── prototype/         ← LEGACY          # Original prototype, preserved for reference only
+├── services/astrology/← UNUSED          # Python astrology service, not currently used
+├── docs/                                # Documentation
+├── scripts/                             # Utility scripts
+└── discusion.md                         # Original product discussion
 ```
+
+**Active codebase:** `frontend/` + `backend/`. All development should happen here.
+
+**Do not modify:** `prototype/` (legacy), `services/astrology/` (unused — astrology is in `backend/src/services/astrology.ts`).
 
 ## Current Prototype Stack
 
