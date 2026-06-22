@@ -289,6 +289,52 @@ router.post('/feature-flags', requireAdminPermission('config.write'), async (req
   }
 })
 
+// ─── Prompt Configs ─────────────────────────────────────────────────────
+
+router.get('/prompt-configs', requireAdminPermission('config.read'), async (_req: AdminRequest, res: Response) => {
+  try {
+    const result = await db.query(
+      `SELECT key, system_prompt, user_prompt_template, version, updated_at FROM prompt_configs ORDER BY key`
+    )
+    res.json({ configs: result.rows })
+  } catch (error) {
+    console.error('Prompt configs error:', error)
+    res.status(500).json({ error: 'Failed to list prompt configs' })
+  }
+})
+
+router.post('/prompt-configs', requireAdminPermission('config.write'), async (req: AdminRequest, res: Response) => {
+  try {
+    const { key, systemPrompt, userPromptTemplate, version } = z.object({
+      key: z.string().min(1),
+      systemPrompt: z.string().min(1),
+      userPromptTemplate: z.string().optional(),
+      version: z.string().optional(),
+    }).parse(req.body)
+
+    // Get before state for audit
+    const before = await db.query('SELECT * FROM prompt_configs WHERE key = $1', [key])
+
+    await db.query(
+      `INSERT INTO prompt_configs (key, system_prompt, user_prompt_template, version, updated_by)
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (key) DO UPDATE SET system_prompt = $2, user_prompt_template = $3, version = $4, updated_by = $5, updated_at = NOW()`,
+      [key, systemPrompt, userPromptTemplate || null, version || 'v1', req.adminUserId]
+    )
+
+    await logAudit(req.adminUserId!, 'update_prompt_config', 'prompt_config', key,
+      before.rows[0] || null, { key, systemPrompt, version }, req.ip, req.headers['user-agent'])
+
+    res.json({ key, updated: true })
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: 'Validation error', details: error.errors })
+    }
+    console.error('Update prompt config error:', error)
+    res.status(500).json({ error: 'Failed to update prompt config' })
+  }
+})
+
 // ─── Audit Log ───────────────────────────────────────────────────────────
 
 router.get('/audit-log', requireAdminPermission('dashboard.read'), async (req: AdminRequest, res: Response) => {

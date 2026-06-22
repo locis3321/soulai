@@ -62,6 +62,12 @@ export const adminApi = {
   updateFeatureFlag: (key: string, value: boolean, description?: string) =>
     adminClient.post('/feature-flags', { key, value, description }).then(r => r.data),
 
+  getPromptConfigs: () =>
+    adminClient.get('/prompt-configs').then(r => r.data),
+
+  updatePromptConfig: (key: string, systemPrompt: string, userPromptTemplate?: string, version?: string) =>
+    adminClient.post('/prompt-configs', { key, systemPrompt, userPromptTemplate, version }).then(r => r.data),
+
   getAuditLog: (params: { limit?: number } = {}) =>
     adminClient.get('/audit-log', { params }).then(r => r.data),
 }

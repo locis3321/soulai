@@ -4,7 +4,7 @@ import AdminLoginPage from './LoginPage'
 
 // ─── Types ─────────────────────────────────────────────────────────────
 
-type Page = 'dashboard' | 'users' | 'payments' | 'ai-logs' | 'safety' | 'audit'
+type Page = 'dashboard' | 'users' | 'payments' | 'ai-logs' | 'safety' | 'feature-flags' | 'prompts' | 'audit'
 
 interface AdminUser { id: string; email: string; name: string; role: string }
 
@@ -37,7 +37,7 @@ export default function AdminApp() {
           <div style={{ fontSize: '0.65rem', color: '#64748b', fontFamily: 'monospace', marginTop: '0.25rem' }}>{env.toUpperCase()}</div>
         </div>
 
-        {(['dashboard', 'users', 'payments', 'ai-logs', 'safety', 'audit'] as Page[]).map(p => (
+        {(['dashboard', 'users', 'payments', 'ai-logs', 'safety', 'feature-flags', 'prompts', 'audit'] as Page[]).map(p => (
           <button key={p} onClick={() => setPage(p)} style={{
             background: page === p ? 'rgba(124,92,255,0.15)' : 'transparent',
             color: page === p ? '#a78bfa' : '#94a3b8',
@@ -50,6 +50,8 @@ export default function AdminApp() {
             {p === 'payments' && '💳 Payments'}
             {p === 'ai-logs' && '🤖 AI Logs'}
             {p === 'safety' && '🛡️ Safety'}
+            {p === 'feature-flags' && '🚩 Feature Flags'}
+            {p === 'prompts' && '📝 Prompts'}
             {p === 'audit' && '📋 Audit Log'}
           </button>
         ))}
@@ -71,6 +73,8 @@ export default function AdminApp() {
         {page === 'payments' && <PaymentsPage />}
         {page === 'ai-logs' && <AiLogsPage />}
         {page === 'safety' && <SafetyPage />}
+        {page === 'feature-flags' && <FeatureFlagsPage />}
+        {page === 'prompts' && <PromptsPage />}
         {page === 'audit' && <AuditPage />}
       </main>
     </div>
@@ -343,6 +347,147 @@ function AuditPage() {
           new Date(l.created_at).toLocaleString(),
         ])}
       />
+    </div>
+  )
+}
+
+// ─── Feature Flags ─────────────────────────────────────────────────────
+
+function FeatureFlagsPage() {
+  const [flags, setFlags] = useState<any[]>([])
+  const [newKey, setNewKey] = useState('')
+  const [newDesc, setNewDesc] = useState('')
+
+  const load = () => adminApi.getFeatureFlags().then(d => setFlags(d.flags)).catch(() => {})
+  useEffect(() => { load() }, [])
+
+  const toggle = async (key: string, current: boolean) => {
+    await adminApi.updateFeatureFlag(key, !current)
+    load()
+  }
+
+  const create = async () => {
+    if (!newKey.trim()) return
+    await adminApi.updateFeatureFlag(newKey, false, newDesc || undefined)
+    setNewKey('')
+    setNewDesc('')
+    load()
+  }
+
+  return (
+    <div>
+      <h2 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '1rem' }}>Feature Flags</h2>
+
+      <div style={{ background: '#111827', borderRadius: '8px', padding: '1rem', marginBottom: '1rem', border: '1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ fontSize: '0.7rem', color: '#64748b', marginBottom: '0.5rem' }}>Create New Flag</div>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <input value={newKey} onChange={e => setNewKey(e.target.value)} placeholder="flag-key"
+            style={{ flex: 1, padding: '0.4rem 0.6rem', background: '#0a0a1a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: '#e2e8f0', fontSize: '0.75rem' }} />
+          <input value={newDesc} onChange={e => setNewDesc(e.target.value)} placeholder="Description (optional)"
+            style={{ flex: 2, padding: '0.4rem 0.6rem', background: '#0a0a1a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: '#e2e8f0', fontSize: '0.75rem' }} />
+          <button onClick={create}
+            style={{ padding: '0.4rem 0.8rem', background: '#7C5CFF', color: 'white', border: 'none', borderRadius: '6px', fontSize: '0.75rem', cursor: 'pointer' }}>
+            Add
+          </button>
+        </div>
+      </div>
+
+      {flags.map(f => (
+        <div key={f.key} style={{ background: '#111827', borderRadius: '8px', padding: '0.75rem', marginBottom: '0.5rem', border: '1px solid rgba(255,255,255,0.06)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div>
+            <div style={{ fontSize: '0.8rem', fontWeight: 600, color: '#e2e8f0' }}>{f.key}</div>
+            {f.description && <div style={{ fontSize: '0.65rem', color: '#64748b' }}>{f.description}</div>}
+          </div>
+          <button onClick={() => toggle(f.key, f.value)} style={{
+            padding: '0.3rem 0.8rem', borderRadius: '12px', border: 'none', fontSize: '0.7rem', fontWeight: 600, cursor: 'pointer',
+            background: f.value ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)',
+            color: f.value ? '#10b981' : '#ef4444',
+          }}>
+            {f.value ? 'ON' : 'OFF'}
+          </button>
+        </div>
+      ))}
+
+      {flags.length === 0 && <div style={{ color: '#64748b', fontSize: '0.75rem', textAlign: 'center', padding: '2rem' }}>No feature flags defined</div>}
+    </div>
+  )
+}
+
+// ─── Prompt Configs ────────────────────────────────────────────────────
+
+function PromptsPage() {
+  const [configs, setConfigs] = useState<any[]>([])
+  const [editing, setEditing] = useState<string | null>(null)
+  const [editSystem, setEditSystem] = useState('')
+  const [editUser, setEditUser] = useState('')
+  const [editVersion, setEditVersion] = useState('')
+
+  const load = () => adminApi.getPromptConfigs().then(d => setConfigs(d.configs)).catch(() => {})
+  useEffect(() => { load() }, [])
+
+  const startEdit = (cfg: any) => {
+    setEditing(cfg.key)
+    setEditSystem(cfg.system_prompt)
+    setEditUser(cfg.user_prompt_template || '')
+    setEditVersion(cfg.version || 'v1')
+  }
+
+  const save = async () => {
+    if (!editing) return
+    await adminApi.updatePromptConfig(editing, editSystem, editUser || undefined, editVersion)
+    setEditing(null)
+    load()
+  }
+
+  return (
+    <div>
+      <h2 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '1rem' }}>Prompt Configuration</h2>
+
+      {configs.map(cfg => (
+        <div key={cfg.key} style={{ background: '#111827', borderRadius: '8px', padding: '1rem', marginBottom: '0.75rem', border: '1px solid rgba(255,255,255,0.06)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+            <div>
+              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#e2e8f0' }}>{cfg.key}</span>
+              <span style={{ fontSize: '0.6rem', color: '#64748b', marginLeft: '0.5rem' }}>v{cfg.version}</span>
+            </div>
+            <button onClick={() => editing === cfg.key ? setEditing(null) : startEdit(cfg)}
+              style={{ fontSize: '0.65rem', color: '#7C5CFF', background: 'none', border: 'none', cursor: 'pointer' }}>
+              {editing === cfg.key ? 'Cancel' : 'Edit'}
+            </button>
+          </div>
+
+          {editing === cfg.key ? (
+            <div style={{ marginBottom: '0.5rem' }}>
+              <div style={{ marginBottom: '0.5rem' }}>
+                <label style={{ fontSize: '0.65rem', color: '#64748b', display: 'block', marginBottom: '0.25rem' }}>System Prompt</label>
+                <textarea value={editSystem} onChange={e => setEditSystem(e.target.value)} rows={6}
+                  style={{ width: '100%', padding: '0.5rem', background: '#0a0a1a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: '#e2e8f0', fontSize: '0.7rem', fontFamily: 'monospace', resize: 'vertical' }} />
+              </div>
+              <div style={{ marginBottom: '0.5rem' }}>
+                <label style={{ fontSize: '0.65rem', color: '#64748b', display: 'block', marginBottom: '0.25rem' }}>User Prompt Template</label>
+                <textarea value={editUser} onChange={e => setEditUser(e.target.value)} rows={3}
+                  style={{ width: '100%', padding: '0.5rem', background: '#0a0a1a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: '#e2e8f0', fontSize: '0.7rem', fontFamily: 'monospace', resize: 'vertical' }} />
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <input value={editVersion} onChange={e => setEditVersion(e.target.value)} placeholder="v1"
+                  style={{ width: '80px', padding: '0.3rem 0.5rem', background: '#0a0a1a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: '#e2e8f0', fontSize: '0.7rem' }} />
+                <button onClick={save}
+                  style={{ padding: '0.4rem 1rem', background: '#10b981', color: 'white', border: 'none', borderRadius: '6px', fontSize: '0.75rem', fontWeight: 600, cursor: 'pointer' }}>
+                  Save
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <pre style={{ background: '#0a0a1a', padding: '0.5rem', borderRadius: '6px', fontSize: '0.65rem', color: '#94a3b8', whiteSpace: 'pre-wrap', maxHeight: '120px', overflow: 'auto', margin: 0 }}>
+                {cfg.system_prompt}
+              </pre>
+            </div>
+          )}
+        </div>
+      ))}
+
+      {configs.length === 0 && <div style={{ color: '#64748b', fontSize: '0.75rem', textAlign: 'center', padding: '2rem' }}>No prompt configs found</div>}
     </div>
   )
 }
