@@ -30,6 +30,7 @@ import marketplaceRoutes from './routes/marketplace.js'
 import { errorHandler } from './middleware/errorHandler.js'
 import { authenticateToken } from './middleware/auth.js'
 import { downgradeExpiredSubscriptions } from './lib/subscription.js'
+import { runMigrations } from './db/migrate.js'
 
 // Load environment variables
 dotenv.config()
@@ -89,16 +90,27 @@ app.use(errorHandler)
 // Create HTTP server
 const server = createServer(app)
 
-// Downgrade expired subscriptions on startup and periodically (every hour)
-downgradeExpiredSubscriptions()
-setInterval(downgradeExpiredSubscriptions, 60 * 60 * 1000)
+// Run migrations, then start server
+async function start() {
+  try {
+    await runMigrations()
+  } catch (err) {
+    console.error('Migration failed:', err)
+    process.exit(1)
+  }
 
-// Start server
-server.listen(PORT, () => {
-  console.log(`🚀 SoulAI Backend Server running on port ${PORT}`)
-  console.log(`📊 Health check: http://localhost:${PORT}/health`)
-  console.log(`🔗 API Base URL: http://localhost:${PORT}/api`)
-})
+  // Downgrade expired subscriptions on startup and periodically (every hour)
+  downgradeExpiredSubscriptions()
+  setInterval(downgradeExpiredSubscriptions, 60 * 60 * 1000)
+
+  server.listen(PORT, () => {
+    console.log(`🚀 SoulAI Backend Server running on port ${PORT}`)
+    console.log(`📊 Health check: http://localhost:${PORT}/health`)
+    console.log(`🔗 API Base URL: http://localhost:${PORT}/api`)
+  })
+}
+
+start()
 
 // Graceful shutdown
 process.on('SIGTERM', () => {
