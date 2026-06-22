@@ -2,8 +2,9 @@ import React, { useState } from 'react'
 import { motion } from 'motion/react'
 import { Crown, Check, X } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useNavigate } from 'react-router-dom'
 import { useSubscription, useCreatePaymentIntent, useCancelSubscription } from '../hooks/useApi'
-import { SubscriptionTier, SUBSCRIPTION_PRICES, SUBSCRIPTION_FEATURES } from '../lib/subscription'
+import { SubscriptionTier, SUBSCRIPTION_PRICES } from '../lib/subscription'
 import { useStore } from '../lib/store'
 import { toast } from 'sonner'
 
@@ -21,6 +22,7 @@ const TIER_FEATURE_KEYS: Record<SubscriptionTier, string[]> = {
 
 export default function SubscriptionPage() {
   const { t } = useTranslation()
+  const navigate = useNavigate()
   const { auth, setUser } = useStore()
   const [selectedPeriod, setSelectedPeriod] = useState<'monthly' | 'yearly'>('monthly')
   const [showPayment, setShowPayment] = useState<SubscriptionTier | null>(null)
@@ -37,9 +39,13 @@ export default function SubscriptionPage() {
 
   const handleSubscribe = async (tier: SubscriptionTier, method: 'alipay' | 'wechat') => {
     try {
-      await createPayment.mutateAsync({ planId: tier, paymentMethod: method, period: selectedPeriod })
+      const result = await createPayment.mutateAsync({ planId: tier, paymentMethod: method, period: selectedPeriod })
       toast.success(t('subscription.paymentInitiated'))
       setShowPayment(null)
+      // Navigate to payment success page with orderId for polling
+      if (result?.orderId) {
+        navigate(`/payment/success?orderId=${result.orderId}`)
+      }
     } catch (err) {
       toast.error(t('subscription.paymentFailed'))
     }

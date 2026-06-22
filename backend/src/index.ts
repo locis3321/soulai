@@ -61,6 +61,8 @@ app.use(morgan('dev'))
 // Body parsing
 app.use(express.json({ limit: '10mb' }))
 app.use(express.urlencoded({ extended: true }))
+// WeChat Pay sends XML callbacks
+app.use('/api/payments/callback/wechat', express.text({ type: 'text/xml', limit: '1mb' }))
 
 // Health check (no auth required)
 app.use('/health', healthRoutes)

@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express'
 import crypto from 'crypto'
 import { db } from '../lib/db.js'
+import { parseWeChatXml, buildWeChatXml } from '../lib/xml.js'
 
 const router = Router()
 
@@ -155,12 +156,17 @@ router.post('/alipay', async (req: Request, res: Response) => {
 // ─── WeChat Pay Async Notification ────────────────────────────────────────
 router.post('/wechat', async (req: Request, res: Response) => {
   try {
-    if (!verifyWeChatPaySignature(req.body)) {
+    // WeChat sends XML body, parse it
+    const xmlBody = typeof req.body === 'string' ? req.body : ''
+    const params = xmlBody ? parseWeChatXml(xmlBody) : req.body
+
+    if (!verifyWeChatPaySignature(params)) {
       console.warn('WeChat callback: invalid signature')
-      return res.json({ return_code: 'FAIL', return_msg: '签名验证失败' })
+      res.type('application/xml')
+      return res.send(buildWeChatXml({ return_code: 'FAIL', return_msg: '签名验证失败' }))
     }
 
-    const { out_trade_no, transaction_id, result_code, total_fee } = req.body
+    const { out_trade_no, transaction_id, result_code, total_fee } = params
 
     if (result_code === 'SUCCESS') {
       const paymentResult = await db.query(
@@ -169,7 +175,8 @@ router.post('/wechat', async (req: Request, res: Response) => {
       )
 
       if (paymentResult.rows.length === 0) {
-        return res.json({ return_code: 'SUCCESS', return_msg: 'OK' })
+        res.type('application/xml')
+        return res.send(buildWeChatXml({ return_code: 'SUCCESS', return_msg: 'OK' }))
       }
 
       const payment = paymentResult.rows[0]
@@ -178,7 +185,8 @@ router.post('/wechat', async (req: Request, res: Response) => {
       const expectedFee = Math.round(parseFloat(payment.amount) * 100)
       if (parseInt(total_fee) !== expectedFee) {
         console.error('WeChat callback: amount mismatch', { expected: expectedFee, received: total_fee })
-        return res.json({ return_code: 'FAIL', return_msg: '金额不匹配' })
+        res.type('application/xml')
+        return res.send(buildWeChatXml({ return_code: 'FAIL', return_msg: '金额不匹配' }))
       }
 
       await db.query(
@@ -191,10 +199,12 @@ router.post('/wechat', async (req: Request, res: Response) => {
     }
 
     // WeChat requires XML response
-    res.json({ return_code: 'SUCCESS', return_msg: 'OK' })
+    res.type('application/xml')
+    res.send(buildWeChatXml({ return_code: 'SUCCESS', return_msg: 'OK' }))
   } catch (error) {
     console.error('WeChat callback error:', error)
-    res.json({ return_code: 'FAIL', return_msg: '处理失败' })
+    res.type('application/xml')
+    res.send(buildWeChatXml({ return_code: 'FAIL', return_msg: '处理失败' }))
   }
 })
 
