@@ -2,6 +2,8 @@
 // Validates AI outputs and detects crisis content in user inputs
 // Supports: en, zh, vi, th
 
+import { db } from './db.js'
+
 const CRISIS_KEYWORDS: Record<string, string[]> = {
   en: [
     'suicide', 'kill myself', 'end my life', 'want to die',
@@ -54,6 +56,25 @@ const MEDICAL_TERMS: Record<string, string[]> = {
   th: ['วินิจฉัย', 'สั่งยา', 'ยา', 'แผนการรักษา', 'รักษาโรค'],
 }
 
+// ─── Safety Event Logger ────────────────────────────────────────────────
+
+function logSafetyEvent(params: {
+  userId?: string
+  eventType: string
+  severity?: string
+  source?: string
+  contentSnippet?: string
+}) {
+  db.query(
+    `INSERT INTO safety_events (user_id, event_type, severity, source, content_snippet)
+     VALUES ($1, $2, $3, $4, $5)`,
+    [params.userId || null, params.eventType, params.severity || 'warning',
+     params.source || null, params.contentSnippet?.slice(0, 500) || null]
+  ).catch(err => console.debug('Safety event write failed:', err.message))
+}
+
+// ─── Detection Functions ────────────────────────────────────────────────
+
 export function detectCrisisContent(text: string): boolean {
   const lower = text.toLowerCase()
   for (const keywords of Object.values(CRISIS_KEYWORDS)) {
@@ -72,17 +93,20 @@ export function validateAiOutput(text: string, lang?: string): { safe: boolean; 
   const l = lang || 'en'
 
   if (detectCrisisContent(text)) {
+    logSafetyEvent({ eventType: 'crisis', severity: 'critical', source: 'ai_output', contentSnippet: text.slice(0, 200) })
     return { safe: false, issues: ['Crisis content in AI output'], replacement: getCrisisResponse(l) }
   }
 
   const guarantees = GUARANTEE_TERMS[l] || GUARANTEE_TERMS.en
   if (guarantees.some(t => lower.includes(t))) {
     issues.push('Contains guaranteed predictions')
+    logSafetyEvent({ eventType: 'guarantee_claim', severity: 'warning', source: 'ai_output', contentSnippet: text.slice(0, 200) })
   }
 
   const medical = MEDICAL_TERMS[l] || MEDICAL_TERMS.en
   if (medical.some(t => lower.includes(t))) {
     issues.push('Contains medical advice')
+    logSafetyEvent({ eventType: 'medical_advice', severity: 'warning', source: 'ai_output', contentSnippet: text.slice(0, 200) })
   }
 
   return { safe: issues.length === 0, issues }
@@ -90,6 +114,7 @@ export function validateAiOutput(text: string, lang?: string): { safe: boolean; 
 
 export function checkUserInputForCrisis(text: string, lang?: string): string | null {
   if (detectCrisisContent(text)) {
+    logSafetyEvent({ eventType: 'crisis', severity: 'critical', source: 'user_input', contentSnippet: text.slice(0, 200) })
     return getCrisisResponse(lang || 'en')
   }
   return null

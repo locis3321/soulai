@@ -1,4 +1,5 @@
 import axios, { AxiosError } from 'axios'
+import { db } from './db.js'
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -187,6 +188,26 @@ class MockProvider implements AIProvider {
 
 const ALLOW_MOCK_FALLBACK = process.env.NODE_ENV !== 'production'
 
+// ─── AI Request Logger ──────────────────────────────────────────────────
+
+function logAiRequest(params: {
+  userId?: string
+  provider: string
+  model?: string
+  requestType?: string
+  latencyMs: number
+  tokensUsed: number
+  wasFallback: boolean
+  fallbackReason?: string
+}) {
+  db.query(
+    `INSERT INTO ai_request_logs (user_id, provider, model, request_type, latency_ms, tokens_used, was_fallback, fallback_reason)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+    [params.userId || null, params.provider, params.model || null, params.requestType || null,
+     params.latencyMs, params.tokensUsed, params.wasFallback, params.fallbackReason || null]
+  ).catch(err => console.debug('AI log write failed:', err.message))
+}
+
 class ProviderChain implements AIProvider {
   name = 'chain'
   private providers: AIProvider[]
@@ -206,6 +227,7 @@ class ProviderChain implements AIProvider {
 
   async complete(req: CompletionRequest): Promise<CompletionResponse> {
     let lastError: Error | null = null
+    const startTime = Date.now()
 
     // Try real providers first (exclude mock)
     const realProviders = this.providers.filter(p => p.name !== 'mock')
@@ -214,7 +236,13 @@ class ProviderChain implements AIProvider {
       for (let attempt = 0; attempt < this.maxRetries; attempt++) {
         try {
           const result = await provider.complete(req)
-          console.log(`AI completion: provider=${result.provider}, latency=${result.latencyMs}ms, tokens=${result.usage.totalTokens}`)
+          logAiRequest({
+            provider: result.provider,
+            model: result.provider === 'minimax' ? process.env.MINIMAX_MODEL_NAME : undefined,
+            latencyMs: result.latencyMs,
+            tokensUsed: result.usage.totalTokens,
+            wasFallback: false,
+          })
           return result
         } catch (err) {
           lastError = err as Error
@@ -226,6 +254,13 @@ class ProviderChain implements AIProvider {
 
           if (!isRetryable || attempt === this.maxRetries - 1) {
             console.error(`AI provider ${provider.name} failed (attempt ${attempt + 1}):`, (err as Error).message)
+            logAiRequest({
+              provider: provider.name,
+              latencyMs: Date.now() - startTime,
+              tokensUsed: 0,
+              wasFallback: false,
+              fallbackReason: (err as Error).message,
+            })
             break
           }
 
@@ -242,6 +277,14 @@ class ProviderChain implements AIProvider {
       const mock = this.providers.find(p => p.name === 'mock')
       if (mock) {
         const result = await mock.complete(req)
+        logAiRequest({
+          provider: 'mock-fallback',
+          latencyMs: Date.now() - startTime,
+          tokensUsed: 0,
+          wasFallback: true,
+          fallbackReason: lastError?.message || 'All providers failed',
+        })
+        return { ...result, provider: 'mock-fallback' }
         return { ...result, provider: 'mock-fallback' }
       }
     }

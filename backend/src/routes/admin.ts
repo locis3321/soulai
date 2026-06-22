@@ -147,6 +147,80 @@ router.post('/users/:userId/subscription', requireAdminPermission('payments.writ
   }
 })
 
+// Export user data (GDPR)
+router.get('/users/:userId/export', requireAdminPermission('users.read'), async (req: AdminRequest, res: Response) => {
+  try {
+    const { userId } = req.params
+
+    const [user, profile, moods, journals, readings, chatSessions, subscriptions] = await Promise.all([
+      db.query(`SELECT id, email, name, birth_date, birth_time, birth_place, language, subscription_tier, created_at FROM users WHERE id = $1`, [userId]),
+      db.query(`SELECT * FROM user_profiles WHERE user_id = $1`, [userId]),
+      db.query(`SELECT mood, note, energy_score, created_at FROM mood_checkins WHERE user_id = $1 ORDER BY created_at DESC`, [userId]),
+      db.query(`SELECT title, content, mood, tags, created_at FROM journals WHERE user_id = $1 ORDER BY created_at DESC`, [userId]),
+      db.query(`SELECT reading_type, birth_data, reading_text, created_at FROM astrology_readings WHERE user_id = $1 ORDER BY created_at DESC`, [userId]),
+      db.query(`SELECT id, advisor_key, title, created_at FROM chat_sessions WHERE user_id = $1 ORDER BY created_at DESC`, [userId]),
+      db.query(`SELECT tier, start_date, end_date, is_active FROM subscriptions WHERE user_id = $1 ORDER BY created_at DESC`, [userId]),
+    ])
+
+    await logAudit(req.adminUserId!, 'export_user_data', 'user', userId, null, null, req.ip, req.headers['user-agent'])
+
+    res.setHeader('Content-Type', 'application/json')
+    res.setHeader('Content-Disposition', `attachment; filename="user-${userId}-export.json"`)
+    res.json({
+      exportedAt: new Date().toISOString(),
+      user: user.rows[0] || null,
+      profile: profile.rows[0] || null,
+      moodCheckins: moods.rows,
+      journals: journals.rows,
+      readings: readings.rows,
+      chatSessions: chatSessions.rows.map((s: any) => ({ id: s.id, advisor: s.advisor_key, title: s.title, createdAt: s.created_at })),
+      subscriptions: subscriptions.rows,
+    })
+  } catch (error) {
+    console.error('Export user data error:', error)
+    res.status(500).json({ error: 'Failed to export user data' })
+  }
+})
+
+// Delete user data (GDPR right to erasure)
+router.delete('/users/:userId/data', requireAdminPermission('users.write'), async (req: AdminRequest, res: Response) => {
+  try {
+    const { userId } = req.params
+    const { reason } = req.body
+
+    if (!reason || typeof reason !== 'string' || reason.length < 1) {
+      return res.status(400).json({ error: 'Reason is required for data deletion' })
+    }
+
+    const user = await db.query('SELECT id, email FROM users WHERE id = $1', [userId])
+    if (user.rows.length === 0) return res.status(404).json({ error: 'User not found' })
+
+    // Delete in order (respecting foreign keys)
+    await db.query(`DELETE FROM chat_messages WHERE session_id IN (SELECT id FROM chat_sessions WHERE user_id = $1)`, [userId])
+    await db.query(`DELETE FROM chat_sessions WHERE user_id = $1`, [userId])
+    await db.query(`DELETE FROM mood_checkins WHERE user_id = $1`, [userId])
+    await db.query(`DELETE FROM journals WHERE user_id = $1`, [userId])
+    await db.query(`DELETE FROM tarot_readings WHERE user_id = $1`, [userId])
+    await db.query(`DELETE FROM astrology_readings WHERE user_id = $1`, [userId])
+    await db.query(`DELETE FROM user_activity WHERE user_id = $1`, [userId])
+    await db.query(`DELETE FROM subscriptions WHERE user_id = $1`, [userId])
+    await db.query(`DELETE FROM payments WHERE user_id = $1`, [userId])
+    await db.query(`DELETE FROM user_profiles WHERE user_id = $1`, [userId])
+    await db.query(`DELETE FROM community_comments WHERE user_id = $1`, [userId])
+    await db.query(`DELETE FROM community_likes WHERE user_id = $1`, [userId])
+    await db.query(`DELETE FROM community_bookmarks WHERE user_id = $1`, [userId])
+    await db.query(`UPDATE users SET email = CONCAT('deleted_', id), name = 'Deleted User', password_hash = NULL, birth_date = NULL, birth_time = NULL, birth_place = NULL, is_active = false WHERE id = $1`, [userId])
+
+    await logAudit(req.adminUserId!, 'delete_user_data', 'user', userId,
+      { email: user.rows[0].email }, { reason }, req.ip, req.headers['user-agent'])
+
+    res.json({ message: 'All personal data deleted. Account deactivated.' })
+  } catch (error) {
+    console.error('Delete user data error:', error)
+    res.status(500).json({ error: 'Failed to delete user data' })
+  }
+})
+
 // ─── Payments ────────────────────────────────────────────────────────────
 
 router.get('/payments', requireAdminPermission('payments.read'), async (req: AdminRequest, res: Response) => {
@@ -332,6 +406,48 @@ router.post('/prompt-configs', requireAdminPermission('config.write'), async (re
     }
     console.error('Update prompt config error:', error)
     res.status(500).json({ error: 'Failed to update prompt config' })
+  }
+})
+
+// ─── System Config ──────────────────────────────────────────────────────
+
+router.get('/system-config', requireAdminPermission('config.read'), async (_req: AdminRequest, res: Response) => {
+  try {
+    const result = await db.query('SELECT key, value, description, updated_at FROM system_configs ORDER BY key')
+    res.json({ configs: result.rows })
+  } catch (error) {
+    console.error('System config error:', error)
+    res.status(500).json({ error: 'Failed to list system configs' })
+  }
+})
+
+router.post('/system-config', requireAdminPermission('config.write'), async (req: AdminRequest, res: Response) => {
+  try {
+    const { key, value, description } = z.object({
+      key: z.string().min(1),
+      value: z.string(),
+      description: z.string().optional(),
+    }).parse(req.body)
+
+    const before = await db.query('SELECT * FROM system_configs WHERE key = $1', [key])
+
+    await db.query(
+      `INSERT INTO system_configs (key, value, description, updated_by)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (key) DO UPDATE SET value = $2, description = $3, updated_by = $4, updated_at = NOW()`,
+      [key, value, description || null, req.adminUserId]
+    )
+
+    await logAudit(req.adminUserId!, 'update_system_config', 'system_config', key,
+      before.rows[0] || null, { key, value }, req.ip, req.headers['user-agent'])
+
+    res.json({ key, value })
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return res.status(400).json({ error: 'Validation error', details: error.errors })
+    }
+    console.error('Update system config error:', error)
+    res.status(500).json({ error: 'Failed to update system config' })
   }
 })
 
