@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Sparkles, Send, Shuffle, Loader2 } from "lucide-react";
+import { Sparkles, Send, Shuffle, Loader2, Crown } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { TarotCard, UserProfile } from "../../types";
 import { TAROT_DECK } from "../../lib/tarotData";
@@ -23,6 +23,7 @@ export default function TarotModule({ profile, isPremium, onNavigate, largeTextM
   const [tarotQuestion, setTarotQuestion] = useState("");
   const [selectedCards, setSelectedCards] = useState<TarotCard[]>([]);
   const [readingResult, setReadingResult] = useState<string | null>(null);
+  const [entitlementError, setEntitlementError] = useState<{ requiredTier: string } | null>(null);
   const [shuffledDeck, setShuffledDeck] = useState<TarotCard[]>(() => [...TAROT_DECK].sort(() => Math.random() - 0.5));
 
   // Use React Query mutation
@@ -32,6 +33,7 @@ export default function TarotModule({ profile, isPremium, onNavigate, largeTextM
     setShuffledDeck([...TAROT_DECK].sort(() => Math.random() - 0.5));
     setSelectedCards([]);
     setReadingResult(null);
+    setEntitlementError(null);
   };
 
   const selectCard = (card: TarotCard) => {
@@ -48,6 +50,9 @@ export default function TarotModule({ profile, isPremium, onNavigate, largeTextM
     const minRequired = tarotSpreadMode === "single" ? 1 : tarotSpreadMode === "three" ? 3 : 10;
     if (selectedCards.length < minRequired) return;
 
+    setEntitlementError(null);
+    setReadingResult(null);
+
     try {
       const response = await tarotReadingMutation.mutateAsync({
         question: tarotQuestion || "What lessons are currently manifesting in my life?",
@@ -58,14 +63,21 @@ export default function TarotModule({ profile, isPremium, onNavigate, largeTextM
       if (response.reading) {
         setReadingResult(response.reading);
       }
-    } catch (err) {
-      // Premium High Quality Offline Fallback
-      let fallbackText = `### Your Celestial Tarot Spread Blueprint\n\n`;
-      selectedCards.forEach((c, idx) => {
-        fallbackText += `* **Position ${idx + 1}: ${c.name} (${c.isReversed ? "Reversed" : "Upright"})**\n  * *Insight*: ${c.isReversed ? c.reversedMeaning : c.uprightMeaning}\n`;
-      });
-      fallbackText += `\n> *The High Priestess's Council*: Stand calm within your own sovereignty. The cards reveal a transition from rigid boundaries into adaptive cosmic flow of Qi. Let go of past grievances.`;
-      setReadingResult(fallbackText);
+    } catch (err: any) {
+      const status = err?.response?.status;
+
+      if (status === 403) {
+        // Entitlement error: show paywall, do NOT generate fallback
+        const requiredTier = err?.response?.data?.requiredTier || 'plus';
+        setEntitlementError({ requiredTier });
+      } else if (status === 401) {
+        // Auth error: redirect to login
+        setEntitlementError({ requiredTier: 'login' });
+      } else {
+        // Network / server error: show generic error, no fallback reading
+        setReadingResult(null);
+        setEntitlementError({ requiredTier: 'error' });
+      }
     }
   };
 
@@ -84,33 +96,38 @@ export default function TarotModule({ profile, isPremium, onNavigate, largeTextM
       <div className="bg-[#11162E] border border-white/5 rounded-2xl p-5 space-y-4">
         <div className="flex justify-between items-center pb-2.5 border-b border-white/5 flex-wrap gap-2">
           <h2 className="font-display text-sm font-semibold text-slate-100 flex items-center gap-1.5">
-            🔮 Interactive Tarot Oracle
+            🔮 {t('discover.tarotModule.title')}
           </h2>
           {/* Spread selector */}
           <select
             value={tarotSpreadMode}
-            onChange={(e) => { setTarotSpreadMode(e.target.value as any); setSelectedCards([]); setReadingResult(null); }}
+            onChange={(e) => {
+              setTarotSpreadMode(e.target.value as any);
+              setSelectedCards([]);
+              setReadingResult(null);
+              setEntitlementError(null);
+            }}
             className="bg-[#090D1C] border border-white/10 rounded px-2.5 py-1 text-slate-300 font-mono text-[10px]"
           >
-            <option value="single">Single Card Focal Point</option>
-            <option value="three">Past, Present & Future (3-Cards)</option>
-            <option value="celtic">Celtic Cross spread (10-Cards)</option>
+            <option value="single">{t('discover.tarotModule.singleCard')}</option>
+            <option value="three">{t('discover.tarotModule.threeCards')}</option>
+            <option value="celtic">{t('discover.tarotModule.celticCross')}</option>
           </select>
         </div>
 
         <p className="text-slate-400 text-xs leading-relaxed">
-          Formulate a clear inquiry. Select <strong>{tarotSpreadMode === "single" ? "1" : tarotSpreadMode === "three" ? "3" : "10"}</strong> cards from the face-down deck below to calibrate alignments.
+          {t('discover.tarotModule.desc')}
         </p>
 
         {/* Input Question */}
         <div className="max-w-xl">
-          <label className="text-slate-400 font-mono text-[9px] uppercase tracking-wider block mb-1">What is your dynamic inquiry?</label>
+          <label className="text-slate-400 font-mono text-[9px] uppercase tracking-wider block mb-1">{t('discover.tarotModule.title')}</label>
           <div className="relative">
             <input
               type="text"
               value={tarotQuestion}
               onChange={(e) => setTarotQuestion(e.target.value)}
-              placeholder="e.g. Guidance on financial flow or relationship compatibility..."
+              placeholder={t('discover.tarotModule.desc')}
               className="w-full bg-[#090D1C] border border-white/10 rounded-xl px-3.5 py-2.5 text-slate-200 text-xs focus:outline-none focus:border-cosmos transition-all pr-12"
             />
             <button
@@ -130,10 +147,10 @@ export default function TarotModule({ profile, isPremium, onNavigate, largeTextM
         {/* Cards Drawn list */}
         <div>
           <div className="flex justify-between items-center text-[10px] font-mono text-slate-450 mb-3 uppercase tracking-wider">
-            <span>Drawn Spreads: {selectedCards.length} Cards</span>
+            <span>{t('discover.tarotModule.selectCards')}: {selectedCards.length} Cards</span>
             {selectedCards.length > 0 && (
               <button onClick={handleShuffle} className="text-glow hover:underline flex items-center gap-1">
-                <Shuffle className="h-2.5 w-2.5" /> Re-shuffle Deck
+                <Shuffle className="h-2.5 w-2.5" /> {t('discover.tarotModule.reshuffle')}
               </button>
             )}
           </div>
@@ -147,7 +164,7 @@ export default function TarotModule({ profile, isPremium, onNavigate, largeTextM
                 <div className="w-10 h-10 rounded-full border border-dashed border-slate-700 flex items-center justify-center text-sm">
                   ?
                 </div>
-                <span>Select card from deck to slot {selectedCards.length + 1}</span>
+                <span>{t('discover.tarotModule.selectCards')} {selectedCards.length + 1}</span>
               </div>
             )}
           </div>
@@ -155,7 +172,7 @@ export default function TarotModule({ profile, isPremium, onNavigate, largeTextM
       </div>
 
       {/* Card Back Deck */}
-      {!readingResult && !isLoading && (
+      {!readingResult && !isLoading && !entitlementError && (
         <div className="bg-[#11162E] p-4 border border-white/5 rounded-2xl">
           <span className="font-mono text-[9px] uppercase text-slate-500 block mb-3">Draw your cards from the sanctuary deck</span>
           <div className="grid grid-cols-6 gap-1.5 max-h-[160px] overflow-y-auto pr-1">
@@ -167,7 +184,7 @@ export default function TarotModule({ profile, isPremium, onNavigate, largeTextM
                   key={card.id}
                   onClick={() => !isDrawn && selectCard(card)}
                   className={`cursor-pointer aspect-[2/3] rounded-lg border flex items-center justify-center text-center transition-all ${
-                    isDrawn 
+                    isDrawn
                       ? "border-transparent bg-white/5 opacity-10 scale-90"
                       : "border-white/10 bg-gradient-to-br from-[#1C2344] to-[#0A0E23] hover:border-star"
                   }`}
@@ -187,7 +204,63 @@ export default function TarotModule({ profile, isPremium, onNavigate, largeTextM
         </div>
       )}
 
-      {readingResult && !isLoading && (
+      {/* Entitlement / Auth error — no fallback reading */}
+      {entitlementError && !isLoading && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-[#11162E] border border-amber-500/20 p-5 rounded-2xl space-y-3"
+        >
+          {entitlementError.requiredTier === 'error' ? (
+            <>
+              <div className="text-center space-y-2">
+                <span className="text-2xl">⚠️</span>
+                <h3 className="font-display font-bold text-sm text-slate-200">Connection Error</h3>
+                <p className="text-slate-400 text-xs">Unable to reach the oracle service. Please check your connection and try again.</p>
+              </div>
+              <button
+                onClick={() => { setEntitlementError(null); handleShuffle(); }}
+                className="w-full py-2 bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-mono rounded-xl cursor-pointer"
+              >
+                Try Again
+              </button>
+            </>
+          ) : (
+            <>
+              <div className="text-center space-y-2">
+                <Crown className="h-8 w-8 text-[#FFD166] mx-auto" />
+                <h3 className="font-display font-bold text-sm text-slate-200">
+                  {entitlementError.requiredTier === 'login'
+                    ? 'Sign In Required'
+                    : `${entitlementError.requiredTier.charAt(0).toUpperCase() + entitlementError.requiredTier.slice(1)} Plan Required`}
+                </h3>
+                <p className="text-slate-400 text-xs">
+                  {entitlementError.requiredTier === 'login'
+                    ? 'Please sign in to access tarot readings.'
+                    : `This spread requires a ${entitlementError.requiredTier} subscription. Upgrade to unlock deeper tarot insights.`}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setEntitlementError(null);
+                  onNavigate('profile');
+                }}
+                className="w-full py-2.5 bg-[#7C5CFF] hover:bg-[#6D4AFF] text-white text-xs font-mono font-bold rounded-xl cursor-pointer transition-all"
+              >
+                {entitlementError.requiredTier === 'login' ? 'Sign In' : 'Upgrade Plan'}
+              </button>
+              <button
+                onClick={() => setEntitlementError(null)}
+                className="w-full py-2 bg-white/5 hover:bg-white/10 text-slate-300 text-xs font-mono rounded-xl cursor-pointer"
+              >
+                Dismiss
+              </button>
+            </>
+          )}
+        </motion.div>
+      )}
+
+      {readingResult && !isLoading && !entitlementError && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-[#11162E] border border-[#7C5CFF]/30 p-5 rounded-2xl space-y-3 shadow-lg">
           <div className="flex justify-between items-center pb-2.5 border-b border-white/5">
             <span className="text-[9px] font-mono uppercase bg-[#7C5CFF]/10 text-[#7C5CFF] px-2.5 py-0.5 rounded font-bold">ALIGNED ORACLE RESPONSE</span>
