@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # PostgreSQL Database
   postgres:
@@ -62,23 +60,6 @@ services:
       - ./backend/src:/app/src
       - ./backend/prisma:/app/prisma
 
-  # Astrology Service (Python)
-  astrology:
-    build:
-      context: ./services/astrology
-      dockerfile: Dockerfile
-    container_name: soulai-astrology
-    restart: unless-stopped
-    ports:
-      - "8000:8000"
-    environment:
-      REDIS_URL: redis://:soulai_redis_password@redis:6379
-    depends_on:
-      redis:
-        condition: service_healthy
-    volumes:
-      - ./services/astrology/app:/app/app
-
   # Frontend (Development)
   frontend:
     build:
@@ -90,10 +71,8 @@ services:
       - "3000:3000"
     environment:
       VITE_API_URL: http://localhost:4000/api
-      VITE_ASTROLOGY_URL: http://localhost:8000
     depends_on:
       - backend
-      - astrology
     volumes:
       - ./frontend/src:/app/src
       - ./frontend/public:/app/public

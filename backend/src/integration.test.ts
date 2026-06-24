@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest'
 
-const BASE = 'http://localhost:4000'
+const BASE = process.env.BACKEND_INTEGRATION_BASE_URL || 'http://localhost:4000'
+const describeIntegration = process.env.RUN_BACKEND_INTEGRATION === 'true' ? describe : describe.skip
 
 async function register(email: string) {
   const res = await fetch(`${BASE}/api/auth/register`, {
@@ -32,7 +33,7 @@ function uniqueEmail() {
   return `integ-${Date.now()}-${++counter}@test.com`
 }
 
-describe('Backend Integration Tests', () => {
+describeIntegration('Backend Integration Tests', () => {
   describe('Auth', () => {
     it('should register a new user', async () => {
       const res = await register(uniqueEmail())

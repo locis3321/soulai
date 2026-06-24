@@ -41,6 +41,7 @@ export interface BaZiResult {
 export interface BaZiInput {
   birthDate: string
   birthTime?: string
+  gender?: 'male' | 'female'
 }
 
 function makePillar(
@@ -131,7 +132,7 @@ export function calculateBaZi(input: BaZiInput): BaZiResult {
   const dayPillar = makePillar(eightChar, 'day')
   const hourPillar = makePillar(eightChar, 'time')
 
-  const gender = 1
+  const gender = input.gender === 'female' ? 0 : 1
   const yun = eightChar.getYun(gender)
   const daYunList = yun.getDaYun(10)
   const daYun = daYunList

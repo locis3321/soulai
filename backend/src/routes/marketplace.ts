@@ -203,22 +203,57 @@ router.post('/practitioners/:id/reviews', async (req: AuthRequest, res: Response
     const { id: practitionerId } = req.params
     const { rating, comment } = reviewSchema.parse(req.body)
 
-    const result = await db.query(
-      `INSERT INTO practitioner_reviews (practitioner_id, user_id, rating, comment)
-       VALUES ($1, $2, $3, $4) RETURNING id, rating, comment, created_at`,
-      [practitionerId, userId, rating, comment || null]
-    )
-
-    // Update practitioner average rating
-    await db.query(
-      `UPDATE practitioners SET
-        rating = (SELECT AVG(rating) FROM practitioner_reviews WHERE practitioner_id = $1),
-        reviews_count = (SELECT COUNT(*) FROM practitioner_reviews WHERE practitioner_id = $1)
-       WHERE id = $1`,
+    const practitioner = await db.query(
+      `SELECT id FROM practitioners WHERE id = $1 AND is_active = true`,
       [practitionerId]
     )
 
-    res.status(201).json({ review: result.rows[0] })
+    if (practitioner.rows.length === 0) {
+      return res.status(404).json({ error: 'Practitioner not found' })
+    }
+
+    const review = await db.transaction(async (client) => {
+      const eligibleBooking = await client.query(
+        `SELECT b.id
+         FROM bookings b
+         WHERE b.user_id = $1
+           AND b.practitioner_id = $2
+           AND b.status = 'completed'
+           AND NOT EXISTS (
+             SELECT 1 FROM practitioner_reviews r WHERE r.booking_id = b.id
+           )
+         ORDER BY b.updated_at DESC
+         LIMIT 1
+         FOR UPDATE`,
+        [userId, practitionerId]
+      )
+
+      if (eligibleBooking.rows.length === 0) {
+        return null
+      }
+
+      const result = await client.query(
+        `INSERT INTO practitioner_reviews (practitioner_id, user_id, booking_id, rating, comment)
+         VALUES ($1, $2, $3, $4, $5) RETURNING id, rating, comment, created_at`,
+        [practitionerId, userId, eligibleBooking.rows[0].id, rating, comment || null]
+      )
+
+      await client.query(
+        `UPDATE practitioners SET
+          rating = (SELECT AVG(rating) FROM practitioner_reviews WHERE practitioner_id = $1),
+          reviews_count = (SELECT COUNT(*) FROM practitioner_reviews WHERE practitioner_id = $1)
+         WHERE id = $1`,
+        [practitionerId]
+      )
+
+      return result.rows[0]
+    })
+
+    if (!review) {
+      return res.status(403).json({ error: 'A completed, unreviewed booking is required to review this practitioner' })
+    }
+
+    res.status(201).json({ review })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return res.status(400).json({ error: 'Validation error', details: error.errors })

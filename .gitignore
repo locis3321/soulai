@@ -6,8 +6,8 @@ coverage/
 *.log
 .env*
 !.env.example
-.mimo-bridge-state.json
 
 # Playwright generated artifacts
+.playwright-mcp/
 frontend/playwright-report/
 frontend/test-results/

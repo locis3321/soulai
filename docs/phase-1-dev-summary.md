@@ -1,5 +1,7 @@
 # SoulAI 阶段 1 开发环境搭建总结
 
+> 当前状态：本文记录阶段 1 当时的开发过程。后续仓库已删除 legacy `prototype/` 和未使用的 Python `services/astrology/`，当前活跃代码只在 `frontend/` 和 `backend/`。
+
 ## 已完成的工作
 
 ### 1. 测试基础设施搭建 ✅
@@ -94,38 +96,9 @@ backend/
 - 错误处理中间件
 - 请求验证
 
-### 4. Python 算法服务创建 ✅
+### 4. Python 算法服务创建（已归档）
 
-**项目结构**
-```
-services/astrology/
-├── app/
-│   ├── main.py            # FastAPI 入口
-│   ├── api/               # API 路由
-│   │   ├── astrology.py   # 占星计算
-│   │   ├── bazi.py        # 八字计算
-│   │   └── numerology.py  # 生命灵数
-│   ├── core/              # 核心计算
-│   └── models/            # 数据模型
-├── tests/                 # 测试
-├── requirements.txt
-├── Dockerfile
-└── .env
-```
-
-**技术栈**
-- FastAPI
-- Kerykeion（西方占星）
-- pyswisseph（Swiss Ephemeris）
-- lunar-python（农历/八字）
-- Redis
-
-**已实现的功能**
-- 西方占星星盘计算
-- 八字四柱计算
-- 生命灵数计算
-- 五行分析
-- 健康检查 API
+早期 Python 算法服务已不再作为当前架构的一部分。命理计算已经迁移到 `backend/src/services/` 下的 TypeScript service，并通过 backend API 暴露。
 
 ### 5. 架构文档 ✅
 
@@ -147,15 +120,6 @@ soulai/
 ├── backend/               # Express.js API 服务器
 │   ├── src/
 │   ├── prisma/
-│   └── package.json
-│
-├── services/
-│   └── astrology/         # Python FastAPI 算法服务
-│       ├── app/
-│       └── requirements.txt
-│
-├── prototype/             # 原型（保留用于快速验证）
-│   ├── src/
 │   └── package.json
 │
 ├── docs/                  # 文档
@@ -192,12 +156,7 @@ cd backend
 npm install
 npm run dev
 
-# 3. 启动 Python 服务
-cd services/astrology
-pip install -r requirements.txt
-uvicorn app.main:app --reload
-
-# 4. 启动前端
+# 3. 启动前端
 cd frontend
 npm install
 npm run dev
@@ -209,7 +168,6 @@ npm run dev
 |------|------|------|
 | Frontend | 3000 | React 前端 |
 | Backend API | 4000 | Express API |
-| Astrology Service | 8000 | Python 算法服务 |
 | PostgreSQL | 5432 | 数据库 |
 | Redis | 6379 | 缓存 |
 | Adminer | 8080 | 数据库管理 |
@@ -219,12 +177,7 @@ npm run dev
 
 ### 短期（1-2 周）
 
-1. **前端迁移**
-   - 将 prototype 中的前端代码迁移到 `frontend/`
-   - 配置 API 代理
-   - 集成认证流程
-
-2. **后端完善**
+1. **后端完善**
    - 实现所有 API 路由
    - 集成 Prisma ORM
    - 实现业务逻辑

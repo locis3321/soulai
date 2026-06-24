@@ -255,6 +255,7 @@ CREATE INDEX IF NOT EXISTS idx_community_bookmarks_user_id ON community_bookmark
 CREATE INDEX IF NOT EXISTS idx_bookings_user_id ON bookings(user_id);
 CREATE INDEX IF NOT EXISTS idx_bookings_practitioner_id ON bookings(practitioner_id);
 CREATE INDEX IF NOT EXISTS idx_practitioner_reviews_practitioner_id ON practitioner_reviews(practitioner_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_practitioner_reviews_booking_id_unique ON practitioner_reviews(booking_id) WHERE booking_id IS NOT NULL;
 
 -- updated_at trigger function
 CREATE OR REPLACE FUNCTION update_updated_at_column()

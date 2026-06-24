@@ -9,14 +9,38 @@ router.get('/export', async (req: AuthRequest, res: Response) => {
   try {
     const userId = req.userId
 
-    const [user, profile, moods, journals, readings, chatSessions, subscriptions] = await Promise.all([
+    const [
+      user,
+      profile,
+      moods,
+      journals,
+      astrologyReadings,
+      tarotReadings,
+      chatSessions,
+      subscriptions,
+      payments,
+      communityPosts,
+      communityComments,
+      communityLikes,
+      communityBookmarks,
+      bookings,
+      practitionerReviews,
+    ] = await Promise.all([
       db.query(`SELECT id, email, name, birth_date, birth_time, birth_place, language, subscription_tier, created_at FROM users WHERE id = $1`, [userId]),
       db.query(`SELECT * FROM user_profiles WHERE user_id = $1`, [userId]),
       db.query(`SELECT mood, note, energy_score, created_at FROM mood_checkins WHERE user_id = $1 ORDER BY created_at DESC`, [userId]),
       db.query(`SELECT title, content, mood, tags, created_at FROM journals WHERE user_id = $1 ORDER BY created_at DESC`, [userId]),
       db.query(`SELECT reading_type, birth_data, reading_text, created_at FROM astrology_readings WHERE user_id = $1 ORDER BY created_at DESC`, [userId]),
+      db.query(`SELECT question, spread_type, cards, reading_text, created_at FROM tarot_readings WHERE user_id = $1 ORDER BY created_at DESC`, [userId]),
       db.query(`SELECT id, advisor_key, title, created_at FROM chat_sessions WHERE user_id = $1 ORDER BY created_at DESC`, [userId]),
       db.query(`SELECT tier, start_date, end_date, is_active FROM subscriptions WHERE user_id = $1 ORDER BY created_at DESC`, [userId]),
+      db.query(`SELECT order_id, plan_id, period, amount, currency, payment_method, payment_status, provider_transaction_id, description, created_at, updated_at FROM payments WHERE user_id = $1 ORDER BY created_at DESC`, [userId]),
+      db.query(`SELECT id, category, title, content, likes_count, comments_count, is_pinned, created_at, updated_at FROM community_posts WHERE user_id = $1 ORDER BY created_at DESC`, [userId]),
+      db.query(`SELECT id, post_id, content, created_at FROM community_comments WHERE user_id = $1 ORDER BY created_at DESC`, [userId]),
+      db.query(`SELECT id, post_id, created_at FROM community_likes WHERE user_id = $1 ORDER BY created_at DESC`, [userId]),
+      db.query(`SELECT id, post_id, created_at FROM community_bookmarks WHERE user_id = $1 ORDER BY created_at DESC`, [userId]),
+      db.query(`SELECT id, practitioner_id, booking_date, booking_time, consultation_mode, status, payment_id, created_at, updated_at FROM bookings WHERE user_id = $1 ORDER BY created_at DESC`, [userId]),
+      db.query(`SELECT id, practitioner_id, booking_id, rating, comment, created_at FROM practitioner_reviews WHERE user_id = $1 ORDER BY created_at DESC`, [userId]),
     ])
 
     // Get chat messages for each session
@@ -35,9 +59,23 @@ router.get('/export', async (req: AuthRequest, res: Response) => {
       profile: profile.rows[0] || null,
       moodCheckins: moods.rows,
       journals: journals.rows,
-      readings: readings.rows,
+      readings: {
+        astrology: astrologyReadings.rows,
+        tarot: tarotReadings.rows,
+      },
       chatHistory: chatMessages,
       subscriptions: subscriptions.rows,
+      payments: payments.rows,
+      community: {
+        posts: communityPosts.rows,
+        comments: communityComments.rows,
+        likes: communityLikes.rows,
+        bookmarks: communityBookmarks.rows,
+      },
+      marketplace: {
+        bookings: bookings.rows,
+        practitionerReviews: practitionerReviews.rows,
+      },
     }
 
     res.setHeader('Content-Type', 'application/json')

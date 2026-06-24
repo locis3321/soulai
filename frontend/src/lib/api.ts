@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios'
+import { useStore } from './store'
 
 // API Response types
 export interface ApiResponse<T> {
@@ -50,7 +51,12 @@ apiClient.interceptors.response.use(
       // Token expired or invalid
       localStorage.removeItem('soul_token')
       localStorage.removeItem('soul_user')
-      window.location.href = '/login'
+      useStore.getState().logout()
+
+      const requestUrl = error.config?.url || ''
+      if (!requestUrl.includes('/auth/login') && !requestUrl.includes('/auth/register')) {
+        window.location.href = '/login'
+      }
     }
     return Promise.reject(error)
   }

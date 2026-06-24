@@ -18,6 +18,14 @@ const ROLE_PERMISSIONS: Record<string, string[]> = {
   readonly: ['users.read', 'payments.read', 'ai_logs.read', 'safety.read', 'dashboard.read'],
 }
 
+export function getAdminJwtSecret(): string {
+  const secret = process.env.ADMIN_JWT_SECRET || process.env.JWT_SECRET
+  if (!secret && process.env.NODE_ENV !== 'development') {
+    throw new Error('ADMIN_JWT_SECRET or JWT_SECRET is required in non-development environments')
+  }
+  return secret || 'admin_default_secret'
+}
+
 export function requireAdminPermission(permission: string) {
   return (req: AdminRequest, res: Response, next: NextFunction) => {
     const role = req.adminRole || 'readonly'
@@ -31,7 +39,7 @@ export function requireAdminPermission(permission: string) {
   }
 }
 
-export function authenticateAdmin(req: AdminRequest, res: Response, next: NextFunction) {
+export async function authenticateAdmin(req: AdminRequest, res: Response, next: NextFunction) {
   const authHeader = req.headers.authorization
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'No admin token provided' })
@@ -40,16 +48,32 @@ export function authenticateAdmin(req: AdminRequest, res: Response, next: NextFu
   const token = authHeader.split(' ')[1]
 
   try {
-    const secret = process.env.ADMIN_JWT_SECRET || process.env.JWT_SECRET || 'admin_default_secret'
-    const decoded = jwt.verify(token, secret) as { adminUserId: string; role: string; email: string }
+    const decoded = jwt.verify(token, getAdminJwtSecret()) as { adminUserId: string; role: string; email: string }
+    const result = await db.query(
+      'SELECT id, email, role FROM admin_users WHERE id = $1 AND is_active = true',
+      [decoded.adminUserId]
+    )
 
-    req.adminUserId = decoded.adminUserId
-    req.adminRole = decoded.role
-    req.adminEmail = decoded.email
+    if (result.rows.length === 0) {
+      return res.status(401).json({ error: 'Admin account inactive or not found' })
+    }
+
+    const admin = result.rows[0]
+
+    req.adminUserId = admin.id
+    req.adminRole = admin.role
+    req.adminEmail = admin.email
 
     next()
   } catch (error) {
-    return res.status(401).json({ error: 'Invalid admin token' })
+    if (error instanceof jwt.TokenExpiredError) {
+      return res.status(401).json({ error: 'Admin token expired' })
+    }
+    if (error instanceof jwt.JsonWebTokenError) {
+      return res.status(401).json({ error: 'Invalid admin token' })
+    }
+    console.error('Admin authentication error:', error)
+    return res.status(500).json({ error: 'Admin authentication failed' })
   }
 }
 

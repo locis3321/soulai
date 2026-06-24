@@ -141,7 +141,7 @@ router.get('/me', async (req: Request, res: Response) => {
     }
 
     const token = authHeader.split(' ')[1]
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default_secret') as { userId: string }
+    const decoded = jwt.verify(token, getJwtSecret()) as { userId: string }
 
     const result = await db.query(
       `SELECT id, email, name, avatar_url, birth_date, birth_time, birth_place, 
@@ -187,7 +187,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
     }
 
     const token = authHeader.split(' ')[1]
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'default_secret') as { userId: string }
+    const decoded = jwt.verify(token, getJwtSecret()) as { userId: string }
 
     // Generate new token
     const newToken = jwt.sign(

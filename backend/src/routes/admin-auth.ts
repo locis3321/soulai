@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express'
 import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { db } from '../lib/db.js'
-import { authenticateAdmin, AdminRequest, logAudit } from '../middleware/adminAuth.js'
+import { authenticateAdmin, AdminRequest, getAdminJwtSecret, logAudit } from '../middleware/adminAuth.js'
 import { z } from 'zod'
 
 const router = Router()
@@ -37,10 +37,9 @@ router.post('/login', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Invalid credentials' })
     }
 
-    const secret = process.env.ADMIN_JWT_SECRET || process.env.JWT_SECRET || 'admin_default_secret'
     const token = jwt.sign(
       { adminUserId: admin.id, email: admin.email, role: admin.role },
-      secret,
+      getAdminJwtSecret(),
       { expiresIn: '8h' }
     )
 
