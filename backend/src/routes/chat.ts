@@ -13,11 +13,38 @@ const router = Router()
 
 // Validation schemas
 const createSessionSchema = z.object({
-  advisorKey: z.enum(['luna', 'athena', 'mystic', 'zen'])
+  advisorKey: z.string().min(1).max(50)
 })
 
 const sendMessageSchema = z.object({
   content: z.string().min(1).max(5000)
+})
+
+// List available AI masters/advisors with active prompts
+router.get('/advisors', async (_req: Request, res: Response) => {
+  try {
+    const result = await db.query(
+      `SELECT m.key, m.name, m.avatar, m.category, m.description,
+              p.system_prompt, p.model, p.language
+       FROM ai_masters m
+       JOIN ai_master_prompts p ON p.master_id = m.id AND p.status = 'active'
+       WHERE m.is_active = true
+       ORDER BY m.key`
+    )
+    const advisors = result.rows.map((r: any) => ({
+      key: r.key,
+      name: r.name,
+      avatar: r.avatar || '🤖',
+      category: r.category,
+      description: r.description,
+      model: r.model,
+      language: r.language,
+    }))
+    res.json({ advisors })
+  } catch (error) {
+    console.error('List advisors error:', error)
+    res.status(500).json({ error: 'Failed to list advisors' })
+  }
 })
 
 // Get all chat sessions for user

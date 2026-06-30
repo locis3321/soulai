@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express'
 import { AuthRequest } from '../middleware/auth.js'
 import { db } from '../lib/db.js'
-import { generateSafeDivinationReading } from '../lib/ai.js'
+import { generateSafeDivinationReading, PROMPT_VERSION } from '../lib/ai.js'
 import { buildUserContext, formatUserContextForPrompt } from '../lib/userContext.js'
 import { getEffectiveTier } from '../lib/subscription.js'
 import { z } from 'zod'
@@ -70,10 +70,10 @@ router.post('/reading', async (req: AuthRequest, res: Response) => {
 
     // Save reading to database
     const result = await db.query(
-      `INSERT INTO tarot_readings (user_id, question, spread_type, cards, reading_text)
-       VALUES ($1, $2, $3, $4, $5)
+      `INSERT INTO tarot_readings (user_id, question, spread_type, cards, reading_text, prompt_version, language)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING id, question, spread_type, cards, reading_text, created_at`,
-      [userId, question || 'General guidance', spreadType, JSON.stringify(cards), readingText]
+      [userId, question || 'General guidance', spreadType, JSON.stringify(cards), readingText, PROMPT_VERSION, userContext.language || 'zh']
     )
 
     res.json({

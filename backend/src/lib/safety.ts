@@ -64,13 +64,30 @@ function logSafetyEvent(params: {
   severity?: string
   source?: string
   contentSnippet?: string
+  aiRequestLogId?: string
 }) {
   db.query(
-    `INSERT INTO safety_events (user_id, event_type, severity, source, content_snippet)
-     VALUES ($1, $2, $3, $4, $5)`,
+    `INSERT INTO safety_events (user_id, event_type, severity, source, content_snippet, ai_request_log_id)
+     VALUES ($1, $2, $3, $4, $5, $6)`,
     [params.userId || null, params.eventType, params.severity || 'warning',
-     params.source || null, params.contentSnippet?.slice(0, 500) || null]
+     params.source || null, params.contentSnippet?.slice(0, 500) || null, params.aiRequestLogId || null]
   ).catch(err => console.debug('Safety event write failed:', err.message))
+}
+
+export function logContentModerationEvent(params: {
+  userId?: string
+  source: string
+  contentSnippet?: string
+  flagType: string
+  severity?: string
+  actionTaken?: string
+}) {
+  db.query(
+    `INSERT INTO content_moderation_events (user_id, source, content_snippet, flag_type, severity, action_taken)
+     VALUES ($1, $2, $3, $4, $5, $6)`,
+    [params.userId || null, params.source, params.contentSnippet?.slice(0, 500) || null,
+     params.flagType, params.severity || 'warning', params.actionTaken || 'flagged']
+  ).catch(err => console.debug('Moderation event write failed:', err.message))
 }
 
 // ─── Detection Functions ────────────────────────────────────────────────

@@ -62,6 +62,13 @@ router.post('/create-intent', async (req: AuthRequest, res: Response) => {
     const userId = req.userId
     const { planId, paymentMethod, period = 'monthly' } = req.body
 
+    // Require phone binding before payment
+    const user = await db.query('SELECT auth_type, phone_verified_at FROM users WHERE id = $1', [userId])
+    if (user.rows.length === 0) return res.status(404).json({ error: 'User not found' })
+    if (!user.rows[0].phone_verified_at) {
+      return res.status(400).json({ error: 'PHONE_BINDING_REQUIRED', message: '请先绑定手机号后再充值' })
+    }
+
     // Validate plan
     if (!['plus', 'premium'].includes(planId)) {
       return res.status(400).json({ error: 'Invalid plan. Must be "plus" or "premium".' })

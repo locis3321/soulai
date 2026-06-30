@@ -25,7 +25,7 @@ services:
     container_name: soulai-redis
     restart: unless-stopped
     ports:
-      - "6379:6379"
+      - "6380:6379"
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes --requirepass soulai_redis_password
@@ -40,6 +40,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
+      target: development
     container_name: soulai-backend
     restart: unless-stopped
     ports:
@@ -63,19 +64,39 @@ services:
   # Frontend (Development)
   frontend:
     build:
-      context: ./frontend
+      context: ./apps/web
       dockerfile: Dockerfile
+      target: development
     container_name: soulai-frontend
     restart: unless-stopped
     ports:
       - "3000:3000"
     environment:
       VITE_API_URL: http://localhost:4000/api
+      VITE_API_PROXY_TARGET: http://backend:4000
     depends_on:
       - backend
     volumes:
-      - ./frontend/src:/app/src
-      - ./frontend/public:/app/public
+      - ./apps/web/src:/app/src
+      - ./apps/web/public:/app/public
+
+  # Admin Frontend (Development)
+  admin-frontend:
+    build:
+      context: ./apps/admin
+      dockerfile: Dockerfile
+      target: development
+    container_name: soulai-admin-frontend
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      VITE_API_URL: http://localhost:4000/api/admin
+      VITE_API_PROXY_TARGET: http://backend:4000
+    depends_on:
+      - backend
+    volumes:
+      - ./apps/admin/src:/app/src
 
   # Adminer (Database Management UI)
   adminer:

@@ -1,6 +1,6 @@
 import { Router, Response } from 'express'
 import { AuthRequest } from '../middleware/auth.js'
-import { generateSafeDivinationReading } from '../lib/ai.js'
+import { generateSafeDivinationReading, PROMPT_VERSION } from '../lib/ai.js'
 import { buildUserContext, formatUserContextForPrompt } from '../lib/userContext.js'
 import { db } from '../lib/db.js'
 import { z } from 'zod'
@@ -39,9 +39,9 @@ router.post('/calculate', async (req: AuthRequest, res: Response) => {
     })
 
     await db.query(
-      `INSERT INTO astrology_readings (user_id, reading_type, birth_data, reading_text, chart_data)
-       VALUES ($1, 'numerology', $2, $3, $4)`,
-      [userId, JSON.stringify({ birthDate, name }), reading, JSON.stringify(numerologyData)]
+      `INSERT INTO astrology_readings (user_id, reading_type, birth_data, reading_text, chart_data, prompt_version, language)
+       VALUES ($1, 'numerology', $2, $3, $4, $5, $6)`,
+      [userId, JSON.stringify({ birthDate, name }), reading, JSON.stringify(numerologyData), PROMPT_VERSION, userContext.language || 'zh']
     )
 
     res.json({ reading, data: numerologyData })

@@ -1,6 +1,23 @@
 import { Request, Response, NextFunction } from 'express'
 import jwt from 'jsonwebtoken'
+import crypto from 'crypto'
 import { db } from '../lib/db.js'
+
+// Token blacklist (in-memory, with TTL matching JWT expiry)
+const tokenBlacklist = new Map<string, number>()
+const BLACKLIST_CLEANUP_MS = 60 * 1000
+setInterval(() => {
+  const now = Date.now()
+  for (const [hash, expires] of tokenBlacklist) {
+    if (now > expires) tokenBlacklist.delete(hash)
+  }
+}, BLACKLIST_CLEANUP_MS)
+
+export function blacklistToken(token: string) {
+  const hash = crypto.createHash('sha256').update(token).digest('hex')
+  // Expire after 8 hours (JWT max lifetime) + 1 hour buffer
+  tokenBlacklist.set(hash, Date.now() + 9 * 60 * 60 * 1000)
+}
 
 export interface AdminRequest extends Request {
   adminUserId?: string
@@ -49,6 +66,13 @@ export async function authenticateAdmin(req: AdminRequest, res: Response, next: 
 
   try {
     const decoded = jwt.verify(token, getAdminJwtSecret()) as { adminUserId: string; role: string; email: string }
+
+    // Check token blacklist (logout invalidation)
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex')
+    if (tokenBlacklist.has(tokenHash)) {
+      return res.status(401).json({ error: 'Token has been revoked. Please login again.' })
+    }
+
     const result = await db.query(
       'SELECT id, email, role FROM admin_users WHERE id = $1 AND is_active = true',
       [decoded.adminUserId]

@@ -1,5 +1,4 @@
-// Content moderation for user-generated content (journals, chat messages)
-// Filters profanity, hate speech, and harmful content
+import { logContentModerationEvent } from './safety.js'
 
 const BLOCKED_PATTERNS: Record<string, RegExp[]> = {
   en: [
@@ -31,19 +30,16 @@ export function moderateContent(text: string, lang: string = 'en'): ModerationRe
   let filtered = text
   const flags: string[] = []
 
-  // Check all language patterns
   for (const [langKey, patterns] of Object.entries(BLOCKED_PATTERNS)) {
     for (const pattern of patterns) {
       if (pattern.test(filtered)) {
         flags.push(`${langKey}_profanity`)
         filtered = filtered.replace(pattern, REPLACEMENT)
       }
-      // Reset lastIndex for global regexes
       pattern.lastIndex = 0
     }
   }
 
-  // Check for excessive caps (shouting) - only for Latin scripts
   if (lang === 'en' || lang === 'vi') {
     const words = filtered.split(/\s+/)
     const capsWords = words.filter(w => w.length > 3 && w === w.toUpperCase() && /[A-Z]/.test(w))
@@ -52,7 +48,6 @@ export function moderateContent(text: string, lang: string = 'en'): ModerationRe
     }
   }
 
-  // Check for spam-like repetition
   const repeatedChars = /(.)\1{9,}/g
   if (repeatedChars.test(filtered)) {
     flags.push('spam_repetition')
@@ -69,4 +64,19 @@ export function moderateContent(text: string, lang: string = 'en'): ModerationRe
 export function isContentSafe(text: string): boolean {
   const result = moderateContent(text)
   return result.clean
+}
+
+export function moderateAndLog(text: string, source: string, userId?: string, lang: string = 'en'): ModerationResult {
+  const result = moderateContent(text, lang)
+  for (const flag of result.flags) {
+    logContentModerationEvent({
+      userId,
+      source,
+      contentSnippet: text.slice(0, 500),
+      flagType: flag,
+      severity: flag.includes('profanity') ? 'warning' : 'info',
+      actionTaken: result.filtered !== text ? 'filtered' : 'flagged',
+    })
+  }
+  return result
 }

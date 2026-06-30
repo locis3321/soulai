@@ -27,6 +27,8 @@ import communityRoutes from './routes/community.js'
 import marketplaceRoutes from './routes/marketplace.js'
 import adminAuthRoutes from './routes/admin-auth.js'
 import adminRoutes from './routes/admin.js'
+import adminAiMastersRoutes from './routes/admin-ai-masters.js'
+import adminAiProvidersRoutes from './routes/admin-ai-providers.js'
 
 // Import middleware
 import { errorHandler } from './middleware/errorHandler.js'
@@ -91,6 +93,8 @@ app.use('/api/marketplace', authenticateToken, marketplaceRoutes)
 // Admin routes (separate auth system)
 app.use('/api/admin/auth', adminAuthRoutes)
 app.use('/api/admin', adminRoutes)
+app.use('/api/admin/ai-masters', adminAiMastersRoutes)
+app.use('/api/admin', adminAiProvidersRoutes)
 
 // Error handling
 app.use(errorHandler)

@@ -10,21 +10,26 @@ Guidance for coding agents working in `/home/weihs/soulai`.
 - Do not recreate removed Mimo workflow files or legacy app directories unless the user explicitly asks for that restoration.
 - Inspect files, edit code, run verification, and report results directly.
 - Keep changes small and focused on the user request.
+- After every task, deliver an actually usable service by running the latest code with Docker Compose.
+- Provide verification or testing links, accounts, and passwords for the running service after each task.
 
 ## Active Scope
 
 Active development happens only in:
 
-- `frontend/` - React + Vite frontend
+- `apps/web/` - User-facing React + Vite frontend (port 3000)
+- `apps/admin/` - Admin React + Vite frontend (port 3001)
+- `packages/shared-types/` - Shared TypeScript type definitions
 - `backend/` - Express + TypeScript backend
 
 Removed or inactive paths:
 
 - `prototype/` has been removed.
 - `services/astrology/` has been removed.
+- `frontend/` has been moved to `apps/web/`.
 - Astrology calculations are implemented in `backend/src/services/astrology.ts`.
 
-Do not add new active code outside `frontend/` or `backend/` unless the user explicitly asks for a repository-structure change.
+Do not add new active code outside `apps/`, `packages/`, or `backend/` unless the user explicitly asks for a repository-structure change.
 
 ## Product Boundaries
 
@@ -193,6 +198,8 @@ Required commands:
 - Substantial frontend changes: `cd frontend && npm run build`
 
 For API changes, include backend API/integration coverage or targeted HTTP smoke tests against the changed endpoints.
+
+After any automated or manual test run, clean up all data created by that test run. Do not leave E2E, smoke-test, or temporary verification records in the shared development database.
 
 If any verification step cannot be run, report exactly what was not run and why.
 

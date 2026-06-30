@@ -9,5 +9,6 @@ coverage/
 
 # Playwright generated artifacts
 .playwright-mcp/
-frontend/playwright-report/
-frontend/test-results/
+apps/*/playwright-report/
+apps/*/test-results/
+packages/*/dist/

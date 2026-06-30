@@ -107,11 +107,25 @@ function verifyWeChatPaySignature(params: Record<string, string>): boolean {
   }
 }
 
+// ─── Callback Logging ─────────────────────────────────────────────────────
+async function logCallback(paymentId: string | null, provider: string, rawBody: string, result: string, errorMessage?: string) {
+  try {
+    await db.query(
+      `INSERT INTO payment_callback_logs (payment_id, provider, raw_body, result, error_message) VALUES ($1, $2, $3, $4, $5)`,
+      [paymentId, provider, rawBody, result, errorMessage || null]
+    )
+  } catch (err) {
+    console.error('Failed to log callback:', err)
+  }
+}
+
 // ─── Alipay Async Notification ────────────────────────────────────────────
 router.post('/alipay', async (req: Request, res: Response) => {
+  const rawBody = JSON.stringify(req.body)
   try {
     if (!verifyAlipaySignature(req.body)) {
       console.warn('Alipay callback: invalid signature')
+      await logCallback(null, 'alipay', rawBody, 'failed', 'Invalid signature')
       return res.status(400).send('fail')
     }
 
@@ -124,15 +138,16 @@ router.post('/alipay', async (req: Request, res: Response) => {
       )
 
       if (paymentResult.rows.length === 0) {
-        // Already processed or unknown order
+        await logCallback(null, 'alipay', rawBody, 'ignored', 'Order not found or already processed')
         return res.send('success')
       }
 
       const payment = paymentResult.rows[0]
 
-      // Verify amount matches
       if (parseFloat(total_amount) !== parseFloat(payment.amount)) {
-        console.error('Alipay callback: amount mismatch', { expected: payment.amount, received: total_amount })
+        const errMsg = `Amount mismatch: expected ${payment.amount}, received ${total_amount}`
+        console.error('Alipay callback:', errMsg)
+        await logCallback(payment.id, 'alipay', rawBody, 'failed', errMsg)
         return res.status(400).send('fail')
       }
 
@@ -142,26 +157,28 @@ router.post('/alipay', async (req: Request, res: Response) => {
       )
 
       await activateSubscription(payment.user_id, payment.plan_id || 'plus')
+      await logCallback(payment.id, 'alipay', rawBody, 'success')
       console.log(`Alipay payment completed: order=${out_trade_no}, user=${payment.user_id}, plan=${payment.plan_id}`)
     }
 
-    // Alipay requires plain text "success" response
     res.send('success')
   } catch (error) {
     console.error('Alipay callback error:', error)
+    await logCallback(null, 'alipay', rawBody, 'error', String(error))
     res.status(500).send('fail')
   }
 })
 
 // ─── WeChat Pay Async Notification ────────────────────────────────────────
 router.post('/wechat', async (req: Request, res: Response) => {
+  const xmlBody = typeof req.body === 'string' ? req.body : ''
+  const rawBody = xmlBody || JSON.stringify(req.body)
   try {
-    // WeChat sends XML body, parse it
-    const xmlBody = typeof req.body === 'string' ? req.body : ''
     const params = xmlBody ? parseWeChatXml(xmlBody) : req.body
 
     if (!verifyWeChatPaySignature(params)) {
       console.warn('WeChat callback: invalid signature')
+      await logCallback(null, 'wechat', rawBody, 'failed', 'Invalid signature')
       res.type('application/xml')
       return res.send(buildWeChatXml({ return_code: 'FAIL', return_msg: '签名验证失败' }))
     }
@@ -175,16 +192,18 @@ router.post('/wechat', async (req: Request, res: Response) => {
       )
 
       if (paymentResult.rows.length === 0) {
+        await logCallback(null, 'wechat', rawBody, 'ignored', 'Order not found or already processed')
         res.type('application/xml')
         return res.send(buildWeChatXml({ return_code: 'SUCCESS', return_msg: 'OK' }))
       }
 
       const payment = paymentResult.rows[0]
 
-      // Verify amount (WeChat sends amount in cents)
       const expectedFee = Math.round(parseFloat(payment.amount) * 100)
       if (parseInt(total_fee) !== expectedFee) {
-        console.error('WeChat callback: amount mismatch', { expected: expectedFee, received: total_fee })
+        const errMsg = `Amount mismatch: expected ${expectedFee}, received ${total_fee}`
+        console.error('WeChat callback:', errMsg)
+        await logCallback(payment.id, 'wechat', rawBody, 'failed', errMsg)
         res.type('application/xml')
         return res.send(buildWeChatXml({ return_code: 'FAIL', return_msg: '金额不匹配' }))
       }
@@ -195,14 +214,15 @@ router.post('/wechat', async (req: Request, res: Response) => {
       )
 
       await activateSubscription(payment.user_id, payment.plan_id || 'plus')
+      await logCallback(payment.id, 'wechat', rawBody, 'success')
       console.log(`WeChat payment completed: order=${out_trade_no}, user=${payment.user_id}, plan=${payment.plan_id}`)
     }
 
-    // WeChat requires XML response
     res.type('application/xml')
     res.send(buildWeChatXml({ return_code: 'SUCCESS', return_msg: 'OK' }))
   } catch (error) {
     console.error('WeChat callback error:', error)
+    await logCallback(null, 'wechat', rawBody, 'error', String(error))
     res.type('application/xml')
     res.send(buildWeChatXml({ return_code: 'FAIL', return_msg: '处理失败' }))
   }
