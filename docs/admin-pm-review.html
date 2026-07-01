@@ -1,0 +1,2365 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SoulAI · 后端管理界面 PM 重审 · 与用户端 v1.3.1 对齐</title>
+<style>
+:root {
+  --bg:           oklch(96.5% 0.012 85);
+  --surface:      oklch(100% 0 0);
+  --surface-2:    oklch(94% 0.014 85);
+  --fg:           oklch(20% 0.018 50);
+  --ink-deep:     oklch(12% 0.025 50);
+  --muted:        oklch(48% 0.012 60);
+  --subtle:       oklch(64% 0.010 60);
+  --border:       oklch(86% 0.008 85);
+  --accent:       oklch(54% 0.18 28);
+  --accent-soft:  oklch(92% 0.04 28);
+  --accent-deep:  oklch(44% 0.16 28);
+  --success:      oklch(58% 0.14 145);
+  --warn:         oklch(65% 0.14 75);
+  --danger:       oklch(58% 0.20 25);
+  --info:         oklch(58% 0.12 240);
+
+  --v10-tag:      oklch(94% 0.030 320);
+  --v11-tag:      oklch(94% 0.025 145);
+  --v12-tag:      oklch(94% 0.025 200);
+  --v13-tag:      oklch(94% 0.020 195);
+  --v131-tag:     oklch(94% 0.022 200);
+
+  --font-display: 'Noto Serif SC', 'Source Han Serif SC', 'Songti SC', 'Iowan Old Style', Charter, Georgia, serif;
+  --font-body:    -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', 'IBM Plex Mono', ui-monospace, Menlo, monospace;
+
+  --gap-xs: 8px;  --gap-sm: 12px; --gap-md: 20px;
+  --gap-lg: 32px; --gap-xl: 56px; --gap-2xl: 96px;
+
+  --container: 1280px;
+  --radius-sm: 4px; --radius-md: 6px; --radius-lg: 12px;
+
+  --ease-ritual: cubic-bezier(0.7, 0, 0.3, 1);
+  --dur-quick:  180ms;
+  --dur-std:    360ms;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; scroll-padding-top: 72px; }
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg);
+  color: var(--fg);
+  line-height: 1.7;
+  font-size: 15px;
+  font-feature-settings: 'kern', 'liga', 'calt';
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+.topnav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: oklch(96.5% 0.012 85 / 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 32px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 12px;
+}
+.topnav .brand {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-deep);
+  letter-spacing: 0.04em;
+}
+.topnav .brand-seal {
+  display: inline-block;
+  width: 14px; height: 14px;
+  background: var(--accent);
+  border-radius: 2px;
+  margin-right: 8px;
+  vertical-align: middle;
+  position: relative;
+  top: -1px;
+}
+.topnav .brand-version {
+  display: inline-block;
+  margin-left: 8px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+.topnav nav { display: flex; gap: 18px; flex-wrap: wrap; }
+.topnav a {
+  color: var(--muted);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 11px;
+  transition: color var(--dur-quick) var(--ease-ritual);
+}
+.topnav a:hover { color: var(--accent); }
+
+.container { max-width: var(--container); margin: 0 auto; padding: 0 32px; }
+.section { padding: var(--gap-2xl) 0; border-bottom: 1px solid var(--border); position: relative; }
+.section:last-of-type { border-bottom: none; }
+
+.eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: var(--gap-md);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.eyebrow::before {
+  content: '';
+  display: inline-block;
+  width: 24px; height: 1px;
+  background: var(--accent);
+}
+
+h1 { font-family: var(--font-display); font-size: clamp(36px, 4.5vw, 56px); font-weight: 500; color: var(--ink-deep); letter-spacing: -0.01em; line-height: 1.15; }
+h2 { font-family: var(--font-display); font-size: clamp(26px, 3vw, 36px); font-weight: 500; color: var(--ink-deep); letter-spacing: -0.01em; line-height: 1.25; margin-bottom: var(--gap-md); }
+h3 { font-family: var(--font-display); font-size: 20px; font-weight: 500; color: var(--ink-deep); margin-bottom: var(--gap-sm); }
+h4 { font-family: var(--font-display); font-size: 16px; font-weight: 600; color: var(--ink-deep); margin-bottom: var(--gap-xs); }
+p  { margin-bottom: var(--gap-sm); }
+p.lede { font-size: 18px; color: var(--muted); max-width: 720px; }
+small, .small { font-size: 13px; color: var(--muted); }
+code, .mono { font-family: var(--font-mono); font-size: 0.9em; }
+
+ul, ol { padding-left: 22px; margin-bottom: var(--gap-sm); }
+li { margin-bottom: 6px; }
+
+.callout {
+  border-left: 3px solid var(--accent);
+  background: var(--accent-soft);
+  padding: 16px 20px;
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  margin: var(--gap-md) 0;
+  font-size: 14px;
+}
+.callout h4 { color: var(--accent-deep); margin-bottom: 6px; font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: var(--gap-md);
+}
+.card.thick { padding: var(--gap-lg); }
+
+.badge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+.badge.muted { background: var(--surface-2); color: var(--muted); }
+.badge.danger { background: oklch(94% 0.04 25); color: oklch(40% 0.20 25); }
+.badge.success { background: oklch(94% 0.04 145); color: oklch(35% 0.14 145); }
+.badge.warn { background: oklch(94% 0.04 75); color: oklch(35% 0.14 75); }
+.badge.info { background: oklch(94% 0.04 240); color: oklch(35% 0.12 240); }
+.badge.v131 { background: var(--v131-tag); color: oklch(35% 0.08 200); }
+.badge.v11 { background: oklch(94% 0.04 28); color: var(--cinnabar); border: 1px solid oklch(86% 0.06 28); }
+.badge.v10 { background: oklch(94% 0.04 320); color: oklch(35% 0.10 320); }
+
+.tag-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: var(--gap-sm); }
+
+.tier-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--gap-sm);
+}
+.tier-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 14px;
+  text-align: center;
+}
+.tier-card.active {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+}
+.tier-card .tier-name { font-family: var(--font-display); font-size: 14px; color: var(--ink-deep); margin-bottom: 4px; }
+.tier-card .tier-english { font-family: var(--font-mono); font-size: 11px; color: var(--muted); letter-spacing: 0.06em; }
+.tier-card .tier-meta { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+.scope-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.scope-table th, .scope-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  vertical-align: top;
+}
+.scope-table th { font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.10em; text-transform: uppercase; color: var(--muted); background: var(--surface-2); }
+.scope-table tr:last-child td { border-bottom: none; }
+.scope-table .decision-keep { color: var(--success); font-weight: 600; }
+.scope-table .decision-reshape { color: var(--warn); font-weight: 600; }
+.scope-table .decision-remove { color: var(--danger); font-weight: 600; text-decoration: line-through; }
+.scope-table .decision-merge { color: var(--info); font-weight: 600; }
+.scope-table .decision-new { color: var(--accent-deep); font-weight: 600; }
+.scope-table .align-tag {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 2px;
+  background: var(--v131-tag);
+  color: oklch(35% 0.08 200);
+  margin-right: 4px;
+  letter-spacing: 0.05em;
+}
+
+.mockup-frame {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 8px 24px oklch(0% 0 0 / 0.04);
+  margin-bottom: var(--gap-md);
+}
+.mockup-header {
+  padding: 12px 18px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+.mockup-header .label::before {
+  content: '◆ ';
+  color: var(--accent);
+  margin-right: 4px;
+}
+.mockup-body {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  min-height: 540px;
+}
+.mockup-sidebar {
+  background: var(--surface-2);
+  border-right: 1px solid var(--border);
+  padding: 12px 10px;
+  font-size: 12px;
+}
+.mockup-sidebar .side-title {
+  font-family: var(--font-display);
+  font-size: 13px;
+  color: var(--ink-deep);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.mockup-sidebar .side-env {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  background: var(--accent-soft);
+  padding: 1px 5px;
+  border-radius: 2px;
+  display: inline-block;
+  margin-bottom: 12px;
+}
+.mockup-sidebar .side-nav { list-style: none; padding: 0; }
+.mockup-sidebar .side-nav li {
+  padding: 6px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 2px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.mockup-sidebar .side-nav li.active {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font-weight: 600;
+}
+.mockup-sidebar .side-nav .icon {
+  display: inline-block;
+  width: 12px; height: 12px;
+  flex-shrink: 0;
+  color: var(--accent);
+}
+.mockup-sidebar .side-nav .icon.muted { color: var(--muted); }
+.mockup-sidebar .side-user {
+  margin-top: auto;
+  border-top: 1px solid var(--border);
+  padding-top: 10px;
+  font-size: 10px;
+  color: var(--muted);
+}
+
+.mockup-content {
+  padding: 22px 28px;
+  background: var(--surface);
+}
+.mockup-content h3 { font-size: 18px; margin-bottom: 4px; }
+.mockup-content .sub {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 18px;
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.kpi-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+}
+.kpi-card .kpi-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.kpi-card .kpi-value {
+  font-family: var(--font-mono);
+  font-size: 22px;
+  color: var(--ink-deep);
+  font-weight: 600;
+}
+.kpi-card .kpi-delta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.kpi-card.accent .kpi-value { color: var(--accent-deep); }
+.kpi-card.success .kpi-value { color: var(--success); }
+.kpi-card.danger .kpi-value { color: var(--danger); }
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+.admin-table thead {
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+.admin-table th {
+  text-align: left;
+  padding: 8px 10px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+}
+.admin-table td {
+  padding: 9px 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--fg);
+  font-size: 12px;
+}
+.admin-table tbody tr:hover { background: oklch(98% 0.005 85); }
+.admin-table .mono { font-family: var(--font-mono); font-size: 11px; }
+.admin-table .pill {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.06em;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background: var(--surface-2);
+  color: var(--muted);
+}
+.admin-table .pill.success { background: oklch(94% 0.04 145); color: oklch(35% 0.14 145); }
+.admin-table .pill.warn { background: oklch(94% 0.04 75); color: oklch(35% 0.14 75); }
+.admin-table .pill.danger { background: oklch(94% 0.04 25); color: oklch(40% 0.20 25); }
+.admin-table .pill.accent { background: var(--accent-soft); color: var(--accent-deep); }
+.admin-table .pill.muted { background: var(--surface-2); color: var(--muted); }
+
+.admin-table .row-actions {
+  display: flex;
+  gap: 4px;
+}
+.admin-table .row-actions button {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  padding: 3px 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 3px;
+  cursor: pointer;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+.admin-table .row-actions button:hover { color: var(--accent); border-color: var(--accent); }
+.admin-table .row-actions button.danger:hover { color: var(--danger); border-color: var(--danger); }
+
+.tab-row {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+.tab-row .tab {
+  padding: 8px 14px;
+  font-size: 12px;
+  color: var(--muted);
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  letter-spacing: 0.06em;
+}
+.tab-row .tab.active {
+  color: var(--accent-deep);
+  border-bottom-color: var(--accent);
+  font-weight: 600;
+}
+
+.field-row {
+  display: grid;
+  grid-template-columns: 140px 1fr 120px;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px dashed var(--border);
+  align-items: center;
+  font-size: 12px;
+}
+.field-row:last-child { border-bottom: none; }
+.field-row .field-label {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+  text-transform: uppercase;
+}
+.field-row .field-value { font-family: var(--font-mono); font-size: 11px; color: var(--fg); }
+.field-row .field-meta { font-family: var(--font-mono); font-size: 10px; color: var(--muted); text-align: right; }
+
+.note-block {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  padding: 12px 16px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  margin: 12px 0;
+  font-size: 12px;
+}
+.note-block .note-title {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.10em;
+  text-transform: uppercase;
+  color: var(--accent-deep);
+  margin-bottom: 6px;
+}
+
+.mockup-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: var(--gap-md);
+}
+
+.timeline-row {
+  display: grid;
+  grid-template-columns: 60px 18px 1fr;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 6px 0;
+  font-size: 11px;
+}
+.timeline-row .tl-time { font-family: var(--font-mono); color: var(--muted); }
+.timeline-row .tl-dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 2px solid var(--border);
+  margin-top: 2px;
+  position: relative;
+}
+.timeline-row .tl-dot.done { background: var(--success); border-color: var(--success); }
+.timeline-row .tl-dot.current { background: var(--accent); border-color: var(--accent); animation: pulse 1.4s ease-in-out infinite; }
+.timeline-row .tl-dot.skip { background: var(--surface); border-color: var(--border); }
+.timeline-row .tl-content .tl-step { font-family: var(--font-mono); color: var(--accent-deep); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; }
+.timeline-row .tl-content .tl-label { color: var(--fg); font-size: 11px; }
+@keyframes pulse { 0%, 100% { box-shadow: 0 0 0 0 oklch(54% 0.18 28 / 0.5); } 50% { box-shadow: 0 0 0 8px oklch(54% 0.18 28 / 0); } }
+
+.locale-pill {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  padding: 2px 5px;
+  border-radius: 2px;
+  margin-right: 3px;
+  letter-spacing: 0.04em;
+}
+.locale-pill.active { background: var(--accent-soft); color: var(--accent-deep); }
+.locale-pill.todo { background: var(--surface-2); color: var(--subtle); }
+
+.doc-matrix { width: 100%; border-collapse: collapse; font-size: 11px; }
+.doc-matrix th, .doc-matrix td { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: center; }
+.doc-matrix th:first-child, .doc-matrix td:first-child { text-align: left; }
+.doc-matrix th { font-family: var(--font-mono); font-size: 9px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); background: var(--surface-2); }
+.doc-matrix .cell-done { background: oklch(92% 0.04 145); color: oklch(35% 0.14 145); font-family: var(--font-mono); font-size: 10px; }
+.doc-matrix .cell-trans { background: oklch(92% 0.04 75); color: oklch(35% 0.14 75); font-family: var(--font-mono); font-size: 10px; }
+.doc-matrix .cell-legal { background: var(--v131-tag); color: oklch(35% 0.08 200); font-family: var(--font-mono); font-size: 10px; }
+.doc-matrix .cell-todo { background: var(--surface-2); color: var(--subtle); font-family: var(--font-mono); font-size: 10px; }
+
+.code-block {
+  background: oklch(20% 0.005 85);
+  color: oklch(95% 0.005 85);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 14px 16px;
+  border-radius: var(--radius-sm);
+  overflow-x: auto;
+  line-height: 1.55;
+  margin: 12px 0;
+}
+.code-block .kw { color: oklch(80% 0.10 28); }
+.code-block .str { color: oklch(80% 0.10 145); }
+.code-block .cmt { color: oklch(60% 0.005 85); font-style: italic; }
+
+.decisions-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.decision-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--accent);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  font-size: 12px;
+}
+.decision-card .dc-tag {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--accent-deep);
+  margin-bottom: 6px;
+}
+.decision-card h4 { font-size: 14px; margin-bottom: 6px; }
+.decision-card .dc-source { color: var(--muted); font-size: 11px; }
+.decision-card .dc-anchor { font-family: var(--font-mono); font-size: 10px; color: var(--accent); margin-top: 6px; }
+
+@media (max-width: 1100px) {
+  .mockup-body { grid-template-columns: 1fr; }
+  .mockup-sidebar { border-right: none; border-bottom: 1px solid var(--border); }
+  .decisions-grid { grid-template-columns: 1fr 1fr; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+  .mockup-pair { grid-template-columns: 1fr; }
+}
+@media (max-width: 720px) {
+  .topnav { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .container { padding: 0 18px; }
+  .tier-grid { grid-template-columns: 1fr 1fr; }
+  .decisions-grid { grid-template-columns: 1fr; }
+  .kpi-grid { grid-template-columns: 1fr 1fr; }
+  .scope-table { font-size: 11px; }
+  .scope-table th, .scope-table td { padding: 6px 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+/* ───── Audio Manifest Page · D06 深化 v1.1 ───── */
+.am-shell { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 32px; margin-top: 32px; }
+.am-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.am-header h3 { margin: 0; font-family: var(--font-display); font-size: 22px; color: var(--ink-deep); }
+.am-counts { display: flex; gap: 16px; margin-top: 24px; flex-wrap: wrap; }
+.am-count-card { flex: 1; min-width: 140px; padding: 16px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-2); }
+.am-count-card .num { font-family: var(--font-mono); font-size: 28px; color: var(--ink-deep); }
+.am-count-card .lbl { font-size: 12px; color: var(--muted); margin-top: 4px; }
+.am-count-card.live .num { color: oklch(54% 0.14 145); }
+.am-count-card.preview .num { color: oklch(60% 0.12 70); }
+.am-count-card.draft .num { color: var(--muted); }
+.am-table { width: 100%; border-collapse: collapse; margin-top: 24px; font-size: 13px; }
+.am-table th { text-align: left; padding: 10px 8px; border-bottom: 2px solid var(--border); color: var(--muted); font-weight: 500; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; }
+.am-table td { padding: 10px 8px; border-bottom: 1px solid var(--border); }
+.am-table tr:hover td { background: var(--surface-2); }
+.am-key { font-family: var(--font-mono); font-size: 12px; color: var(--ink-deep); }
+.am-pill { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-family: var(--font-mono); }
+.am-pill.live { background: oklch(94% 0.04 145); color: oklch(40% 0.14 145); }
+.am-pill.preview { background: oklch(94% 0.04 70); color: oklch(40% 0.12 70); }
+.am-pill.draft { background: var(--surface-2); color: var(--muted); }
+.am-row-tool { color: var(--cinnabar); cursor: pointer; font-family: var(--font-mono); font-size: 12px; }
+.am-rule { display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-bottom: 1px solid var(--border); }
+.am-rule:last-child { border-bottom: none; }
+.am-rule-tag { font-family: var(--font-mono); font-size: 11px; color: var(--cinnabar); background: oklch(94% 0.04 28); padding: 2px 6px; border-radius: 3px; flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<header class="topnav">
+<div class="brand">
+    <span class="brand-seal"></span>SoulAI Admin · 后台管理 PM 重审
+    <span class="brand-version">v1.2</span>
+  </div>
+  <nav>
+    <a href="#diagnosis">01 诊断</a>
+    <a href="#scope">02 边界</a>
+    <a href="#decisions">03 决策</a>
+    <a href="#tokens">04 令牌</a>
+    <a href="#mockup-login">05 登录</a>
+    <a href="#mockup-dashboard">06 看板</a>
+    <a href="#mockup-users">07 用户</a>
+    <a href="#mockup-payments">08 支付</a>
+    <a href="#mockup-masters">09 大师</a>
+    <a href="#mockup-privacy">10 法务</a>
+    <a href="#alignment">11 对齐</a>
+    <a href="#closing">12 收尾</a>
+  </nav>
+</header>
+
+<main id="content">
+<!-- ═══════════════════════════════════════════════════════════════ PART 01 · 现状诊断 -->
+
+<section class="section" id="diagnosis" data-od-id="diagnosis">
+  <div class="container">
+    <div class="eyebrow">PART 01 · 当前 admin 状态诊断</div>
+    <h2>16 个页面 · 1 套 AI-slop 视觉 · 0 与用户端对齐</h2>
+    <p class="lede">admin 是用户端 v1.3.1 全部决策（v0.3 Marketplace 砍掉 / v0.5 弥勒寺采样 / v0.9 法务 SSR / v1.0-v1.3.1 法律 40 文档追踪 / v1.1 订单时间轴 / v1.1 大师按条逆逻辑 / v1.3.1 声音 manifest）的<strong>后端实施承载页</strong>，但当前实现既不符合用户端 Eastern Zen 视觉，也不具备承接 v0.3-v1.3.1 决策的字段与流程。</p>
+
+    <div class="kpi-grid" style="margin-top:32px;">
+      <div class="kpi-card accent">
+        <div class="kpi-label">页面数</div>
+        <div class="kpi-value">16</div>
+        <div class="kpi-delta">Dashboard / Users / Payments / AI Masters / AI Providers / AI Logs / Readings / Marketplace / Community / Safety / Feature Flags / Prompts / Audit / Security / Privacy / System / Analytics</div>
+      </div>
+      <div class="kpi-card danger">
+        <div class="kpi-label">视觉冲突</div>
+        <div class="kpi-value">3 处</div>
+        <div class="kpi-delta">#0a0a1a 暗紫底 + #7C5CFF 紫按钮 + #e2e8f0 文本 → 与用户端 Eastern Zen 不一致</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">v1.3.1 决策承接</div>
+        <div class="kpi-value">0 / 11</div>
+        <div class="kpi-delta">v0.3 Marketplace / v0.5 弥勒寺 / v0.9 法务 SSR / v1.0 法律 SSR / v1.1 订单时间轴 / v1.1 大师按条逆逻辑 / v1.1 单次付费 / v1.2 i18n 5 locale / v1.3.1 locales.json / v1.3.1 order-timeline.json / v1.3.1 声音 manifest</div>
+      </div>
+      <div class="kpi-card success">
+        <div class="kpi-label">已锁基础</div>
+        <div class="kpi-value">3</div>
+        <div class="kpi-delta">React 19 + Vite 6 + axios + i18next + react-router-dom + 235 行 api.ts 全栈接口已通</div>
+      </div>
+    </div>
+
+    <div class="callout">
+      <h4>PM 视角 · 三件必须重新审视的事</h4>
+      <ol style="margin-top:8px;">
+        <li><strong>Marketplace 35KB 单页</strong> — 与 v0.3「Marketplace 不引入第三方内容」决策正面冲突，需要在 admin 端明确「已下线 / 历史数据迁移 / 不再开发」</li>
+        <li><strong>AiMasters 缺「弥勒寺采样计划」字段</strong> — v0.5 决策需要 admin 端可视化承载（采样窗口 / 真人克隆授权链路 / 备播方案 / 替换排期）</li>
+        <li><strong>Privacy 缺 40 文档追踪 + locales.json 编辑能力</strong> — v1.0-v1.3.1 全部法务 SSR 流程需要在 admin 端有完整编辑与发布能力（含 5 locale 翻译工作流）</li>
+      </ol>
+    </div>
+
+    <h3 style="margin-top:48px;">视觉冲突破坏表 · 与用户端 v1.3.1 对比</h3>
+    <table class="scope-table">
+      <thead>
+        <tr><th>维度</th><th>用户端 v1.3.1（已锁）</th><th>admin 当前</th><th>冲突</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>主背景</td>
+          <td><span class="mono">oklch(96.5% 0.012 85)</span> · 宣纸米白</td>
+          <td><span class="mono">#0a0a1a</span> · 暗紫底</td>
+          <td><span class="badge danger">完全冲突</span></td>
+        </tr>
+        <tr>
+          <td>主操作色</td>
+          <td><span class="mono">oklch(54% 0.18 28)</span> · 朱砂</td>
+          <td><span class="mono">#7C5CFF</span> · 紫色</td>
+          <td><span class="badge danger">完全冲突 · AI-slop 反规则</span></td>
+        </tr>
+        <tr>
+          <td>正文</td>
+          <td><span class="mono">oklch(20% 0.018 50)</span> · 墨黑</td>
+          <td><span class="mono">#e2e8f0</span> · 亮灰</td>
+          <td><span class="badge danger">完全冲突</span></td>
+        </tr>
+        <tr>
+          <td>Display 字体</td>
+          <td>Noto Serif SC + 宋体</td>
+          <td>system-ui sans</td>
+          <td><span class="badge warn">部分冲突</span></td>
+        </tr>
+        <tr>
+          <td>tier 等级命名</td>
+          <td>墨客 / 朱砂 / 玉 / 金</td>
+          <td>free / plus / premium</td>
+          <td><span class="badge danger">与 PART 19 状态轴完全冲突</span></td>
+        </tr>
+        <tr>
+          <td>language locale</td>
+          <td>zh-CN / en / vi / th / my</td>
+          <td>en / zh / vi / th / my</td>
+          <td><span class="badge warn">缺少 zh-CN 区域细分 · locales.json 与此字段冲突</span></td>
+        </tr>
+        <tr>
+          <td>付款状态</td>
+          <td>6 态（pending / success / failed / cancelled / refunded / partial）</td>
+          <td>4 态（pending / completed / failed / cancelled）</td>
+          <td><span class="badge warn">缺 refunded / partial · 不支持 v1.1 退款冷静期</span></td>
+        </tr>
+        <tr>
+          <td>大师字段</td>
+          <td>5 位（玄真子 / 慧明 / 灵隐 / Aurora / Luna）· 含弥勒寺采样计划</td>
+          <td>category 字段（divination / wellness）· 缺弥勒寺 / 真人克隆 / 备播</td>
+          <td><span class="badge danger">不承载 v0.5 决策</span></td>
+        </tr>
+        <tr>
+          <td>法律文档</td>
+          <td>40 份（8 slug × 5 locale）· 后端 SSR 渲染</td>
+          <td>无 40 文档追踪 / 无 locales.json 编辑</td>
+          <td><span class="badge danger">不承载 v1.0-v1.3.1 决策</span></td>
+        </tr>
+        <tr>
+          <td>支付订单详情</td>
+          <td>5 节点时间轴 · 三方回执号脱敏 · 不暴露 SDK 字段</td>
+          <td>纯列表 · 无时间轴下钻</td>
+          <td><span class="badge danger">不承载 v1.1 / v1.3.1 决策</span></td>
+        </tr>
+        <tr>
+          <td>音频配置</td>
+          <td>38 段音 · 后端下推 · loop:true + crossfadeMs:4000 写死 · 用户态不可调</td>
+          <td>无</td>
+          <td><span class="badge danger">不承载 v0.4 / v1.3.1 决策</span></td>
+        </tr>
+        <tr>
+          <td>模型 provider</td>
+          <td>后端化 · prompt 版本管理 · 不暴露 SDK 内部</td>
+          <td>已有 AiProviders / Prompts 页面 · 但缺版本号字段</td>
+          <td><span class="badge warn">已部分承载 · 待补 version 字段</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+<!-- ═══════════════════════════════════════════════════════════════ PART 02 · 功能边界重审 -->
+
+<section class="section" id="scope" data-od-id="scope">
+  <div class="container">
+    <div class="eyebrow">PART 02 · 16 页功能边界重审 · 保留 / 重塑 / 合并 / 新增</div>
+    <h2>按用户端 v1.3.1 决策重塑 admin</h2>
+    <p class="lede">16 页全部过一遍。决策 = 保留（仅视觉重塑）+ 重塑（增加 v1.3.1 字段）+ 合并（拆字段进相邻页）+ 新增（承载新决策）+ 删除（v0.3 Marketplace 砍掉）。</p>
+
+    <h3 style="margin-top:48px;">PART 02.A · 决策总览（16 页）</h3>
+    <table class="scope-table">
+      <thead>
+        <tr><th style="width:120px;">路由</th><th style="width:90px;">决策</th><th style="width:90px;">来源</th><th>改动要点</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="mono">dashboard</span></td>
+          <td class="decision-keep">保留</td>
+          <td><span class="align-tag">v1.3.1</span></td>
+          <td>视觉重塑 · KPI 卡加 5 大模块使用占比 / VIP 续费率 / 订单时间轴告警</td>
+        </tr>
+        <tr>
+          <td><span class="mono">users</span></td>
+          <td class="decision-reshape">重塑</td>
+          <td><span class="align-tag">v0.7 / v0.9</span></td>
+          <td>tier 命名对齐（墨客 / 朱砂 / 玉 / 金 / 已过期）· 加注销冷静期字段 · 加 7 天朱砂到期用户清单 · 加 wish-pack 用户视图</td>
+        </tr>
+        <tr>
+          <td><span class="mono">payments</span></td>
+          <td class="decision-reshape">重塑</td>
+          <td><span class="align-tag">v0.7 / v1.1 / v1.3.1</span></td>
+          <td>6 态状态机 · 订单详情 5 节点时间轴下钻 · 重复支付标记 · 退款冷静期（仅 pending ≤ 3min）· 大师按条逆逻辑判定入账 · 单次付费不退款标记</td>
+        </tr>
+        <tr>
+          <td><span class="mono">ai-masters</span></td>
+          <td class="decision-reshape">重塑</td>
+          <td><span class="align-tag">v0.5 / v1.0</span></td>
+          <td>加「弥勒寺采样计划」字段（采样窗口 / 真人克隆授权链路 / 备播方案 / 替换排期）· 5 位大师固定 · 文末安全边界 disclaimer 模板</td>
+        </tr>
+        <tr>
+          <td><span class="mono">ai-providers</span></td>
+          <td class="decision-reshape">重塑</td>
+          <td><span class="align-tag">v0.3 / v1.0</span></td>
+          <td>prompt 版本号字段（v1 / v2 / v3）· model + provider 绑定关系可视化 · 后端化字段显式标注「前端不读」</td>
+        </tr>
+        <tr>
+          <td><span class="mono">ai-logs</span></td>
+          <td class="decision-keep">保留</td>
+          <td><span class="align-tag">v0.3</span></td>
+          <td>仅视觉重塑 · 加 5 占卜人格分流日志 + 6 大师分流日志</td>
+        </tr>
+        <tr>
+          <td><span class="mono">readings</span></td>
+          <td class="decision-keep">保留</td>
+          <td><span class="align-tag">v0.3</span></td>
+          <td>视觉重塑 · 易经来源显式标注 · 5 模块分类视图</td>
+        </tr>
+        <tr>
+          <td><span class="mono">marketplace</span></td>
+          <td class="decision-remove">删除</td>
+          <td><span class="align-tag">v0.3</span></td>
+          <td>v0.3「Marketplace 不引入第三方内容」· 已下线 · 历史数据迁移到 ai-masters（practitioners 字段）· 不再开发</td>
+        </tr>
+        <tr>
+          <td><span class="mono">community</span></td>
+          <td class="decision-reshape">重塑</td>
+          <td><span class="align-tag">v0.3 / v1.2</span></td>
+          <td>改名为「氛围运营」· 仅官方账号 + 用户动态 · 无 marketplace 行为 · 加 i18n 5 locale 内容审核视图</td>
+        </tr>
+        <tr>
+          <td><span class="mono">safety</span></td>
+          <td class="decision-keep">保留</td>
+          <td><span class="align-tag">v0.3</span></td>
+          <td>视觉重塑 · 加 5 大模块安全拦截分类 · 大师文字边界拦截告警</td>
+        </tr>
+        <tr>
+          <td><span class="mono">feature-flags</span></td>
+          <td class="decision-keep">保留</td>
+          <td><span class="align-tag">v0.7</span></td>
+          <td>视觉重塑 · 加 v0.7 v1.1 v1.3.1 各决策关联的 flag（wish_pack_renew / master_text_inverse_logic / order_timeline_pulse）</td>
+        </tr>
+        <tr>
+          <td><span class="mono">prompts</span></td>
+          <td class="decision-reshape">重塑</td>
+          <td><span class="align-tag">v0.3 / v1.0</span></td>
+          <td>prompt 版本号字段（v1 → v2 → v3）· version 标签侧边显示 · AGENTS.md 安全边界 disclaimer 模板</td>
+        </tr>
+        <tr>
+          <td><span class="mono">audit</span></td>
+          <td class="decision-reshape">重塑</td>
+          <td><span class="align-tag">v1.0-v1.3.1</span></td>
+          <td>审计粒度加到 hash 变化追踪 · 「哪次 locales.json 编辑改了哪份文档的 hash」可追溯</td>
+        </tr>
+        <tr>
+          <td><span class="mono">security</span></td>
+          <td class="decision-keep">保留</td>
+          <td><span class="align-tag">v0.9</span></td>
+          <td>视觉重塑 · admin 登录与用户登录解耦 · admin 仅邮箱 + 密码（用户端仅手机号 + 验证码，与 admin 分离）</td>
+        </tr>
+        <tr>
+          <td><span class="mono">privacy</span></td>
+          <td class="decision-reshape">重塑</td>
+          <td><span class="align-tag">v0.9 / v1.0-v1.3.1</span></td>
+          <td>加 40 文档追踪表 · locales.json 在线编辑 · hash 校验 · SSR 渲染缓存监控 · 5 埋点告警视图 · 注销冷静期 15 天</td>
+        </tr>
+<tr>
+          <td><span class="mono">system</span></td>
+          <td class="decision-reshape">重塑</td>
+          <td><span class="align-tag">v0.3 / v1.1 / v1.2</span></td>
+          <td><strong>v1.2 视觉重塑</strong> · Eastern Zen 宣纸白底 + 朱砂 accent + 墨 fg（替换 #0a0a1a 暗紫底 + #7C5CFF 紫按钮）· 6 tabs（内容安全 / 订阅权益 / Marketplace 已下线 / 免费额度 / 多语言 / 公告配置）· 每 tab 顶部决策对齐 note-block · 编辑 / 保存 / 取消按钮朱砂描边 → 朱砂实色 → 墨灰取消 · value 显示按 true / false / 文本 三态着色（绿 / 朱砂 / 琥珀）· <strong>v1.1 拆分</strong> · 38 段音配置已拆分至独立 AudioManifestPage · 本页不再承担 ambient / trigger / reveal</td>
+        </tr>
+        <tr>
+          <td><span class="mono">analytics</span></td>
+          <td class="decision-reshape">重塑</td>
+          <td><span class="align-tag">v0.7 / v1.1</span></td>
+          <td>加 5 大模块使用占比 · VIP T-7d/T-3d/T-0/T+X/T+30d 续费率 · 大师文字按条计费逆逻辑报表 · 兜底 5 分钟停留率</td>
+        </tr>
+        <tr style="background: oklch(94% 0.020 195);">
+          <td><span class="mono">+ legal-doc-tracker</span></td>
+          <td class="decision-new">新增</td>
+          <td><span class="align-tag">v1.3.1</span></td>
+          <td>从 privacy 页抽出 40 文档追踪表为独立页 · 评审会现场演示翻译工作流 · 不引入 Notion / 飞书表格</td>
+        </tr>
+        <tr style="background: oklch(94% 0.020 195);">
+          <td><span class="mono">+ audio-manifest</span></td>
+          <td class="decision-new">新增</td>
+          <td><span class="align-tag">v0.4 / v1.3.1</span></td>
+          <td>从 system 页抽出 38 段音配置为独立页 · loop:true + crossfadeMs:4000 写死 · ambient 8s 主段 + 4s 尾段对齐录音</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <h4>PART 02.B · Marketplace 删除决策 · admin 端落地</h4>
+      <p>v0.3「Marketplace 不引入第三方内容」是用户端核心决策。admin 当前 <code class="mono">MarketplacePage.tsx</code> 35KB（最大单页之一）仍在维护 practitioners（第三方命理师入驻 / 评论 / 异常检测 / 投诉处理）全流程。</p>
+      <p style="margin-top:8px;"><strong>决策</strong>：该页面在 admin v1.0 中标注为「已下线 · v0.3 决策」并加红色横幅，路由保留但显示下线说明；历史数据（practitioners / reviews / bookings / disputes）迁移到 <code class="mono">ai-masters</code> 作为「5 位大师 + 历史第三方入驻数据」双视图；不再开发 marketplace 新功能（如 weight 算法、anomaly detect、review flag 等不再迭代）。</p>
+      <p style="margin-top:8px;"><strong>社区页面</strong>改名为「氛围运营」：保留用户动态 / 官方公告 / 内容审核；删除 marketplace 行为（用户不能在该页面发布服务、不能下单第三方）；与 v0.3「无第三方命理师入驻」决策一致。</p>
+    </div>
+
+    <h3 style="margin-top:48px;">PART 02.C · 用户状态轴 admin 端落地</h3>
+    <p>用户端 v0.7 PART 19 状态轴（未登录 / 墨客 / 朱砂·玉·金·有效 / 朱砂·玉·金·已过期）需要在 admin 端完整承载，便于运营识别每个用户的状态、切换规则、5 个时间维度（T-7d / T-3d / T-0 / T+X / T+30d）。</p>
+    <div class="tier-grid" style="margin-top:16px;">
+      <div class="tier-card">
+        <div class="tier-name">未登录</div>
+        <div class="tier-english">guest</div>
+        <div class="tier-meta">匿名 · 仅晨间 1 卦</div>
+      </div>
+      <div class="tier-card">
+        <div class="tier-name">墨客</div>
+        <div class="tier-english">free</div>
+        <div class="tier-meta">注册即可 · 5 模块每日 3 次</div>
+      </div>
+      <div class="tier-card active">
+        <div class="tier-name">朱砂</div>
+        <div class="tier-english">plus · ¥28/月</div>
+        <div class="tier-meta">大师文字 60 条/月 · 5 模块无限</div>
+      </div>
+      <div class="tier-card">
+        <div class="tier-name">玉</div>
+        <div class="tier-english">premium · ¥68/月</div>
+        <div class="tier-meta">心愿解签包 + 大师语音（v1.1）</div>
+      </div>
+      <div class="tier-card">
+        <div class="tier-name">金</div>
+        <div class="tier-english">gold · ¥218/月</div>
+        <div class="tier-meta">年度 · 全功能 + 提前内测</div>
+      </div>
+    </div>
+    <p class="small" style="margin-top:8px;">admin <code class="mono">users</code> 页 tier 字段将现有 free/plus/premium 重命名为 墨客/朱砂/玉/金，新增「已过期」状态显示（朱砂 / 玉 / 金 过期后 30 天内显示此状态，30 天后降回墨客）。</p>
+  </div>
+</section>
+<!-- ═══════════════════════════════════════════════════════════════ PART 03 · PM 决策块 -->
+
+<section class="section" id="decisions" data-od-id="decisions">
+  <div class="container">
+    <div class="eyebrow">PART 03 · PM 决策 · v1.0 · admin 重审</div>
+    <h2>11 条 admin 端决策 · 与用户端 v1.3.1 全对齐</h2>
+    <p class="lede">每条决策包含：来源（用户端哪条决策需要在 admin 落地）· admin 落地路径 · 视觉对齐要点 · 验收标准。</p>
+
+    <div class="decisions-grid" style="margin-top:32px;">
+      <div class="decision-card">
+        <div class="dc-tag">D01 · v1.0 决策</div>
+        <h4>视觉令牌重塑：Eastern Zen 后台变体</h4>
+        <p>复用用户端 6 个 OKLch token · 后台新增 surface / success / warn / danger / info 5 个状态 token · 紫 #7C5CFF 全部替换为朱砂 #D04A35 · 暗色底 #0a0a1a 替换为宣纸白 #FAFAF7</p>
+        <p class="dc-source">来源：soulai-pm-review.html v1.3.1 PART 03 Eastern Zen 视觉体系</p>
+        <p class="dc-anchor">→ #tokens</p>
+      </div>
+      <div class="decision-card">
+        <div class="dc-tag">D02 · v1.0 决策</div>
+        <h4>Marketplace 已下线（v0.3 决策可视化）</h4>
+        <p>marketplace 路由保留但显示红色横幅「已下线 · v0.3 决策 · 不再开发」· 历史数据迁移到 ai-masters · 社区改名为「氛围运营」</p>
+        <p class="dc-source">来源：soulai-pm-review.html v0.3 PART 03 新增列「Marketplace 不引入第三方内容」</p>
+        <p class="dc-anchor">→ #scope</p>
+      </div>
+      <div class="decision-card">
+        <div class="dc-tag">D03 · v0.5 决策可视化</div>
+        <h4>AiMasters 加弥勒寺采样计划字段</h4>
+        <p>每条大师记录新增：弥勒寺采样窗口 / 真人克隆授权链路 / 备播方案（v0.5 文字期声优录制） / 替换排期 / 严禁纯合成音替代标记</p>
+        <p class="dc-source">来源：soulai-pm-review.html v0.5 PART 17 5 大师声线段尾</p>
+        <p class="dc-anchor">→ #mockup-masters</p>
+      </div>
+      <div class="decision-card">
+        <div class="dc-tag">D04 · v1.0-v1.3.1 决策</div>
+        <h4>Privacy 加 40 文档追踪 + locales.json 编辑</h4>
+        <p>40 份文档（8 slug × 5 locale）的在线编辑 + hash 校验 + SSR 渲染缓存监控 + 5 埋点告警视图 + 注销冷静期 15 天流程</p>
+        <p class="dc-source">来源：soulai-pm-review.html v1.0 PART 23 + v1.3.1 locales.json + v1.3.1 order-timeline.json 字典外提</p>
+        <p class="dc-anchor">→ #mockup-privacy</p>
+      </div>
+      <div class="decision-card">
+        <div class="dc-tag">D05 · v1.1 / v1.3.1 决策</div>
+        <h4>Payments 加订单详情 5 节点时间轴</h4>
+        <p>复用用户端 MOCKUP 13 订单详情模式 · 5 节点（创建 / 调起 / 授权 / 回跳落印 / 逾期）· 三方回执号脱敏 · 不暴露 SDK 字段 · 重复支付标记 · 大师按条逆逻辑判定入账</p>
+        <p class="dc-source">来源：soulai-pm-review.html v1.1 PART 22 + v1.2 MOCKUP 13 + v1.3.1 order-timeline.json</p>
+        <p class="dc-anchor">→ #mockup-payments</p>
+      </div>
+<div class="decision-card">
+        <div class="dc-tag">D06 · v0.4 / v1.3.1 决策 · v1.1 深化</div>
+        <h4>System 加 38 段音配置（声音 manifest）</h4>
+        <p>底色 / 触发 / 揭示三层 · 6 占卜人格 + 5 大师声线 + 3 冥想轨道 · loop:true + crossfadeMs:4000 写死常量 · 用户态不可调锁定 · 等功率淡入淡出规范 · <strong>v1.1 深化：独立 AudioManifestPage · 从 system 拆出 · 38 段音 seed · preview 段待 PM 现场播放验收</strong></p>
+        <p class="dc-source">来源：soulai-pm-review.html v0.4 PART 17 + v1.3.1 声音 manifest 后端下推 · v1.1 深化决策</p>
+        <p class="dc-anchor">→ PART 04 tokens / PART 12 mockup-audio</p>
+      </div>
+      <div class="decision-card">
+        <div class="dc-tag">D07 · v0.7 决策可视化</div>
+        <h4>Users 加 5 档状态轴 + 注销冷静期</h4>
+        <p>tier 命名对齐（墨客 / 朱砂 / 玉 / 金 / 已过期）· 加注销冷静期字段 · 加 7 天朱砂到期用户清单 · 加 wish-pack 用户视图 · 加 data_export 完整数据导出</p>
+        <p class="dc-source">来源：soulai-pm-review.html v0.7 PART 19 状态轴 + v0.9 注销冷静期</p>
+        <p class="dc-anchor">→ #mockup-users</p>
+      </div>
+      <div class="decision-card">
+        <div class="dc-tag">D08 · v0.3 / v1.0 决策</div>
+        <h4>AiProviders + Prompts 加版本号字段</h4>
+        <p>prompt 版本号（v1 → v2 → v3）侧边显示 · model + provider 绑定关系可视化 · 后端化字段显式标注「前端不读」· AGENTS.md 安全边界 disclaimer 模板</p>
+        <p class="dc-source">来源：soulai-pm-review.html v0.3 PART 03「解读语言模型后端化」+ v1.0 PART 22 大师文字按条计费</p>
+        <p class="dc-anchor">→ 系统配置页 / Prompts 页</p>
+      </div>
+      <div class="decision-card">
+        <div class="dc-tag">D09 · v0.7 / v1.1 决策</div>
+        <h4>Analytics 加 5 维度报表</h4>
+        <p>5 大模块使用占比 / VIP T-7d-T-3d-T-0-T+X-T+30d 续费率 / 大师文字按条计费逆逻辑报表 / 兜底 5 分钟停留率 / 单次付费不退款率</p>
+        <p class="dc-source">来源：soulai-pm-review.html v0.7 PART 21 + v1.1 PART 22 兜底 5 分钟</p>
+        <p class="dc-anchor">→ Analytics 页</p>
+      </div>
+      <div class="decision-card">
+        <div class="dc-tag">D10 · v1.0-v1.3.1 决策</div>
+        <h4>Audit 加 hash 变化追踪</h4>
+        <p>审计粒度加到 hash 变化追踪 · 「哪次 locales.json 编辑改了哪份文档的 hash」可追溯 · 与 privacy 页 40 文档追踪表联动</p>
+        <p class="dc-source">来源：soulai-pm-review.html v1.0 PART 23 法务 manifest + v1.3.1 locales.json</p>
+        <p class="dc-anchor">→ Audit 页</p>
+      </div>
+<div class="decision-card">
+        <div class="dc-tag">D11 · v0.9 / v1.3.1 决策</div>
+        <h4>Admin 登录与用户登录解耦</h4>
+        <p>admin 端仅邮箱 + 密码（运营内部使用）· 用户端仅手机号 + 验证码（v0.9 字段最小化）· 两套体系独立 token · 不共享 session</p>
+        <p class="dc-source">来源：soulai-pm-review.html v0.9 PART 03 注册路径 + 安全边界</p>
+        <p class="dc-anchor">→ #mockup-login</p>
+      </div>
+      <div class="decision-card" style="border-left: 3px solid var(--v12-tag, oklch(94% 0.025 200));">
+        <div class="dc-tag" style="background: oklch(94% 0.025 200); color: oklch(36% 0.10 200);">D12 · v1.2 决策 · 视觉重塑</div>
+        <h4>SystemConfigPage 全量视觉重塑 · Eastern Zen</h4>
+        <p>替换 #0a0a1a 暗紫底 + #7C5CFF 紫按钮为 Eastern Zen 宣纸白底 + 朱砂实色按钮 + 墨文本 · 与 <code class="mono">AdminApp</code> / <code class="mono">PaymentsPage</code> / <code class="mono">PrivacyCompliancePage</code> / <code class="mono">AiMastersPage</code> / <code class="mono">UsersPage</code> / <code class="mono">LoginPage</code> / <code class="mono">AudioManifestPage</code> 共用同一 OKLch token · 6 tabs（内容安全 / 订阅权益 / Marketplace 已下线 / 免费额度 / 多语言 / 公告配置）· 每 tab 顶部决策对齐 note-block 列与用户端 v0.3 / v0.5 / v0.7 / v1.0 / v1.1 / v1.3.1 决策对接点 · 编辑 / 保存 / 取消按钮 朱砂描边 → 朱砂实色 → 墨灰取消 · value 三态着色（绿 / 朱砂 / 琥珀）· body bg 升级到宣纸白（v1.0 兜底态与 v1.0 mockup 一致）</p>
+        <p class="dc-source">来源：v1.2 评审决策 · 保证所有界面颜色样式统一 · Marketplace tab 显式标注「v0.3 决策 · 已下线 · 仅供历史记录」</p>
+        <p class="dc-anchor">→ 系统配置页 / 全 8 重塑页 OKLch token 同源</p>
+      </div>
+    </div>
+
+    <div class="callout">
+      <h4>PART 03 决策一致性</h4>
+      <p>12 条 admin 决策中，<strong>8 条来自用户端 v1.3.1 决策体系</strong>（D02 / D03 / D04 / D05 / D06 / D07 / D08 / D11）· <strong>3 条是 admin 内部重塑</strong>（D01 视觉令牌 / D09 Analytics 报表 / <strong>D12 v1.2 SystemConfigPage 视觉重塑</strong>）· <strong>1 条是跨页联动</strong>（D10 audit + privacy 联动）。</p>
+      <p style="margin-top:8px;">所有决策在 footer / Part 12 closing / Open Questions 中显式标注，可追溯到用户端 soulai-pm-review.html 的对应节段（PART 03 / PART 19 / PART 20 / PART 21 / PART 22 / PART 23 / PART 24 / v1.3.1 locales.json / v1.3.1 order-timeline.json）。</p>
+    </div>
+  </div>
+</section>
+<!-- ═══════════════════════════════════════════════════════════════ PART 04 · 视觉令牌 -->
+
+<section class="section" id="tokens" data-od-id="tokens">
+  <div class="container">
+    <div class="eyebrow">PART 04 · Eastern Zen 后台变体视觉令牌</div>
+    <h2>复用用户端 OKLch token · 后台新增 5 个状态 token</h2>
+    <p class="lede">admin 是用户端 v1.3.1 的后端承载页，视觉必须与用户端 Eastern Zen 一致。复用 6 个核心 token（bg / surface / fg / ink-deep / border / accent）+ 新增 5 个后台专用状态 token（success / warn / danger / info / 4 个版本 tag 视觉区分）。</p>
+
+    <h3 style="margin-top:48px;">PART 04.A · 颜色 token · 复用 + 新增</h3>
+    <div class="code-block">
+<span class="cmt">// 复用用户端 soulai-pm-review.html v1.3.1 :root</span>
+--bg:           <span class="kw">oklch</span>(96.5% 0.012 85);   <span class="cmt">// 宣纸白（同用户端）</span>
+--surface:      <span class="kw">oklch</span>(100% 0 0);         <span class="cmt">// 纯白卡（后台更白以便阅读表格）</span>
+--fg:           <span class="kw">oklch</span>(20% 0.018 50);      <span class="cmt">// 墨黑</span>
+--ink-deep:     <span class="kw">oklch</span>(12% 0.025 50);      <span class="cmt">// 标题墨黑</span>
+--muted:        <span class="kw">oklch</span>(48% 0.012 60);      <span class="cmt">// 次要文本</span>
+--border:       <span class="kw">oklch</span>(86% 0.008 85);      <span class="cmt">// 浅宣纸边</span>
+--accent:       <span class="kw">oklch</span>(54% 0.18 28);       <span class="cmt">// 朱砂（同用户端）</span>
+--accent-soft:  <span class="kw">oklch</span>(92% 0.04 28);       <span class="cmt">// 朱砂浅</span>
+--accent-deep:  <span class="kw">oklch</span>(44% 0.16 28);       <span class="cmt">// 朱砂深</span>
+
+<span class="cmt">// 新增 · 后台专用</span>
+--success:      <span class="kw">oklch</span>(58% 0.14 145);      <span class="cmt">// 苔绿 · 已完成 / done</span>
+--warn:         <span class="kw">oklch</span>(65% 0.14 75);       <span class="cmt">// 苔黄 · 待处理 / pending</span>
+--danger:       <span class="kw">oklch</span>(58% 0.20 25);       <span class="cmt">// 朱砂深 · 失败 / 注销</span>
+--info:         <span class="kw">oklch</span>(58% 0.12 240);      <span class="cmt">// 远山蓝 · 信息 / notice</span>
+
+<span class="cmt">// 版本 tag · 用于区分 v0.x / v1.0 / v1.1 / v1.2 / v1.3.1</span>
+--v10-tag:      <span class="kw">oklch</span>(94% 0.030 320);      <span class="cmt">// v1.0 粉紫</span>
+--v11-tag:      <span class="kw">oklch</span>(94% 0.025 145);      <span class="cmt">// v1.1 苔绿</span>
+--v12-tag:      <span class="kw">oklch</span>(94% 0.025 200);      <span class="cmt">// v1.2 苔蓝</span>
+--v13-tag:      <span class="kw">oklch</span>(94% 0.020 195);      <span class="cmt">// v1.3 冷杉青</span>
+--v131-tag:     <span class="kw">oklch</span>(94% 0.022 200);      <span class="cmt">// v1.3.1 冷杉青（与 v1.2 微区分）</span>
+    </div>
+
+    <h3 style="margin-top:48px;">PART 04.B · 字体 · 后台表格密度适配</h3>
+    <table class="scope-table">
+      <thead><tr><th style="width:160px;">层级</th><th>用户端 v1.3.1</th><th>admin v1.0</th><th>理由</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>Display</td>
+          <td>Noto Serif SC + 宋体</td>
+          <td><strong>Noto Serif SC + 宋体</strong>（同用户端 · 用于页面大标题与区块标题）</td>
+          <td>保持视觉一致性</td>
+        </tr>
+        <tr>
+          <td>Body</td>
+          <td>系统字 sans</td>
+          <td><strong>系统字 sans + 13-14px 表格密度</strong></td>
+          <td>后台信息密度高 · 12-13px 等于用户端 14-15px</td>
+        </tr>
+        <tr>
+          <td>Mono</td>
+          <td>JetBrains Mono · 价格 / 计数 / 时间戳</td>
+          <td><strong>JetBrains Mono · 表格数值 / ID / hash / 时间戳</strong>（同用户端）</td>
+          <td>保持数值一致 + tabular-nums</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3 style="margin-top:48px;">PART 04.C · 视觉差异 · 用户端 vs admin</h3>
+    <table class="scope-table">
+      <thead><tr><th>维度</th><th>用户端 v1.3.1</th><th>admin v1.0</th><th>差异原因</th></tr></thead>
+      <tbody>
+        <tr>
+          <td>间距节奏</td>
+          <td>大留白（gap-2xl = 96px）· 单屏 1 个焦点</td>
+          <td><strong>紧凑（gap-md = 20px）· 单屏多 KPI + 表格</strong></td>
+          <td>后台信息密度需求 · 与用户端少即是多相反</td>
+        </tr>
+        <tr>
+          <td>圆角</td>
+          <td>大圆角（radius-lg = 16px）</td>
+          <td><strong>中圆角（radius-lg = 12px · radius-md = 6px）</strong></td>
+          <td>表格紧凑需较小圆角</td>
+        </tr>
+        <tr>
+          <td>阴影</td>
+          <td>极轻阴影（oklch 0% 0 0 / 0.04）</td>
+          <td><strong>无阴影 + hairline border</strong></td>
+          <td>表格密集无阴影更整洁</td>
+        </tr>
+        <tr>
+          <td>滚动</td>
+          <td>section 间大滚动</td>
+          <td><strong>表格内部横向滚动 + sticky header</strong></td>
+          <td>后台标准模式</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="note-block">
+      <div class="note-title">为什么 admin 端不引入暗色主题？</div>
+      <p>虽然暗色后台是传统选择，但与用户端 Eastern Zen 决策冲突（朱砂在宣纸白上对比度最佳）。admin 视觉与用户端保持一致有助于产品团队切换视角时无需重新校色，同时让 PM 评审文档整体视觉闭环。</p>
+    </div>
+  </div>
+</section>
+<!-- ═══════════════════════════════════════════════════════════════ PART 05 · MOCKUP · Login -->
+
+<section class="section" id="mockup-login" data-od-id="mockup-login">
+  <div class="container">
+    <div class="eyebrow">PART 05 · MOCKUP · 后台登录页</div>
+    <h2>admin 与用户端登录解耦 · 仅邮箱 + 密码 · 视觉 Eastern Zen</h2>
+    <p class="lede">D11 决策：admin 端仅邮箱 + 密码（运营内部）· 用户端仅手机号 + 验证码（v0.9 字段最小化）· 两套 token 独立。</p>
+
+    <div class="mockup-frame">
+      <div class="mockup-header"><span class="label">MOCKUP · 后台登录 · v1.0</span><span>env · production</span></div>
+      <div class="mockup-body" style="grid-template-columns: 1fr; min-height: 540px;">
+        <div style="display:grid; grid-template-columns: 1fr 1fr; min-height: 540px;">
+          <div style="background: var(--surface-2); border-right: 1px solid var(--border); padding: 64px 48px; display: flex; flex-direction: column; justify-content: center;">
+            <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.18em; color: var(--accent); text-transform: uppercase; margin-bottom: 16px;">◆ SoulAI · Admin Console</div>
+            <h2 style="font-family: var(--font-display); font-size: 32px; line-height: 1.25; color: var(--ink-deep); margin-bottom: 16px;">后端运营界面</h2>
+            <p style="font-size: 14px; color: var(--muted); margin-bottom: 24px;">仅供运营 / 内容审核 / 风控 / 法务内部使用 · 与用户端 v1.3.1 决策体系对齐。</p>
+            <div style="display: grid; gap: 12px;">
+              <div style="display: flex; align-items: center; gap: 10px; font-size: 13px;"><span style="display:inline-block; width:6px; height:6px; background: var(--accent); border-radius: 50%;"></span><span>11 条决策承接用户端 v0.3-v1.3.1</span></div>
+              <div style="display: flex; align-items: center; gap: 10px; font-size: 13px;"><span style="display:inline-block; width:6px; height:6px; background: var(--accent); border-radius: 50%;"></span><span>Eastern Zen 视觉令牌 · 朱砂 + 墨 + 宣纸</span></div>
+              <div style="display: flex; align-items: center; gap: 10px; font-size: 13px;"><span style="display: inline-block; width: 6px; height: 6px; background: var(--accent); border-radius: 50%;"></span><span>16 页功能边界重审 · Marketplace 已下线</span></div>
+              <div style="display: flex; align-items: center; gap: 10px; font-size: 13px;"><span style="display: inline-block; width: 6px; height: 6px; background: var(--accent); border-radius: 50%;"></span><span>40 文档追踪 + locales.json 编辑 · 5 埋点监控</span></div>
+            </div>
+            <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border); font-family: var(--font-mono); font-size: 11px; color: var(--muted); line-height: 1.6;">
+              <div>环境 · <span style="color: var(--accent);">production</span></div>
+              <div>构建 · v1.0 · 2026.07.01</div>
+              <div>commit · admin-review-2026-q3</div>
+            </div>
+          </div>
+
+          <div style="background: var(--surface); padding: 64px 48px; display: flex; flex-direction: column; justify-content: center;">
+            <div style="font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.18em; color: var(--muted); text-transform: uppercase; margin-bottom: 16px;">登录</div>
+            <h3 style="font-family: var(--font-display); font-size: 24px; color: var(--ink-deep); margin-bottom: 8px;">管理员登录</h3>
+            <p style="font-size: 13px; color: var(--muted); margin-bottom: 32px;">仅邮箱 + 密码 · 与用户端登录体系完全解耦</p>
+
+            <div style="margin-bottom: 20px;">
+              <label style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.10em; color: var(--muted); text-transform: uppercase; display: block; margin-bottom: 6px;">邮箱</label>
+              <input type="email" value="reviewer@soulai.app" readonly style="width: 100%; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--fg); font-size: 13px; font-family: var(--font-mono);" />
+            </div>
+            <div style="margin-bottom: 20px;">
+              <label style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.10em; color: var(--muted); text-transform: uppercase; display: block; margin-bottom: 6px;">密码</label>
+              <input type="password" value="•••••••••••" readonly style="width: 100%; padding: 10px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--fg); font-size: 13px; font-family: var(--font-mono);" />
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 24px;">
+              <span style="display: inline-block; width: 14px; height: 14px; border: 1.5px solid var(--accent); background: var(--accent); border-radius: 2px; position: relative;"><span style="position: absolute; top: 0px; left: 3px; color: white; font-size: 10px;">✓</span></span>
+              <span style="font-size: 12px; color: var(--fg);">本机 7 天免登录</span>
+            </div>
+
+            <button style="width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); font-weight: 600; font-size: 14px; cursor: pointer; font-family: var(--font-display);">登录</button>
+
+            <div style="margin-top: 24px; padding: 12px; background: var(--surface-2); border-radius: var(--radius-sm); border-left: 3px solid var(--warn);">
+              <div style="font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.08em; color: oklch(35% 0.14 75); text-transform: uppercase; margin-bottom: 4px;">◆ v0.9 字段最小化决策（用户端）</div>
+              <div style="font-size: 12px; color: var(--fg); line-height: 1.55;">用户端仅支持手机号 + 短信验证码注册登录（无用户名 / 无密码）· admin 与用户端 <strong>tokens 独立</strong>，不共享 session。</div>
+            </div>
+
+            <div style="margin-top: 20px; display: flex; gap: 8px;">
+              <button style="font-family: var(--font-mono); font-size: 10px; padding: 4px 10px; border: 1px solid var(--border); background: var(--surface); border-radius: 3px; color: var(--accent); letter-spacing: 0.06em;">ZH</button>
+              <button style="font-family: var(--font-mono); font-size: 10px; padding: 4px 10px; border: 1px solid var(--border); background: var(--surface); border-radius: 3px; color: var(--muted); letter-spacing: 0.06em;">EN</button>
+              <div style="margin-left: auto; font-size: 11px; color: var(--muted); align-self: center;">v1.0 · 2026.07.01</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note-block">
+      <div class="note-title">D11 · admin 登录与用户登录解耦 · 关键点</div>
+      <p><strong>为什么不复用用户端登录体系？</strong>①admin 是内部运营工具（运营 / 内容审核 / 风控 / 法务），用户是外部消费者，两类角色信任域完全不同；②用户端仅手机号 + 验证码（v0.9 字段最小化），admin 端仅邮箱 + 密码（更便于 SSO + IP 白名单 + 双因素）；③两套 token 独立，admin token 泄露不影响用户端，反之亦然。</p>
+    </div>
+  </div>
+</section>
+<!-- ═══════════════════════════════════════════════════════════════ PART 06 · MOCKUP · Dashboard -->
+
+<section class="section" id="mockup-dashboard" data-od-id="mockup-dashboard">
+  <div class="container">
+    <div class="eyebrow">PART 06 · MOCKUP · 运营 Dashboard</div>
+    <h2>5 模块使用占比 + VIP 续费率 + 订单告警 一屏看完</h2>
+    <p class="lede">Dashboard 是 PM / 运营每天第一眼看到的页面。原有 KPI（新增 / 活跃 / 付费 / 营收 / AI 调用 / 失败率 / 延迟）保留 · 加 5 模块使用占比 / VIP 续费率 / 订单时间轴告警 · 视觉 Eastern Zen。</p>
+
+    <div class="mockup-frame">
+      <div class="mockup-header"><span class="label">MOCKUP · Dashboard · v1.0</span><span>env · production · last 24h</span></div>
+      <div class="mockup-body">
+        <div class="mockup-sidebar">
+          <div class="side-title">SoulAI Admin</div>
+          <span class="side-env">PRODUCTION</span>
+          <ul class="side-nav">
+            <li class="active"><span class="icon">◆</span> Dashboard</li>
+            <li><span class="icon muted">●</span> Users</li>
+            <li><span class="icon muted">●</span> Payments</li>
+            <li><span class="icon muted">●</span> AI Masters</li>
+            <li><span class="icon muted">●</span> AI Providers</li>
+            <li><span class="icon muted">●</span> Readings</li>
+            <li><span class="icon muted">✕</span> <span style="text-decoration: line-through; opacity: 0.5;">Marketplace</span></li>
+            <li><span class="icon muted">●</span> 氛围运营</li>
+            <li><span class="icon muted">●</span> Safety</li>
+            <li><span class="icon muted">●</span> Feature Flags</li>
+            <li><span class="icon muted">●</span> Prompts</li>
+            <li><span class="icon muted">●</span> Audit</li>
+            <li><span class="icon muted">●</span> Security</li>
+            <li><span class="icon muted">●</span> Privacy</li>
+            <li><span class="icon muted">●</span> System</li>
+            <li><span class="icon muted">●</span> Analytics</li>
+          </ul>
+          <div class="side-user">
+            reviewer@soulai.app<br/>
+            <span style="color: var(--accent);">admin</span><br/>
+            <span style="color: var(--danger); cursor: pointer;">退出登录</span>
+          </div>
+        </div>
+
+        <div class="mockup-content">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+            <div>
+              <h3 style="margin: 0;">运营 Dashboard</h3>
+              <div class="sub">最近 24 小时 · 2026.07.01 00:00 - 23:59 · UTC+8</div>
+            </div>
+            <select style="padding: 6px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px; font-family: var(--font-mono);">
+              <option>最近 24 小时</option>
+              <option>最近 7 天</option>
+              <option>最近 30 天</option>
+              <option>最近 90 天</option>
+            </select>
+          </div>
+
+          <div class="kpi-grid">
+            <div class="kpi-card">
+              <div class="kpi-label">新增用户</div>
+              <div class="kpi-value">1,284</div>
+              <div class="kpi-delta">↑ 12.4% vs 昨日</div>
+            </div>
+            <div class="kpi-card success">
+              <div class="kpi-label">活跃用户</div>
+              <div class="kpi-value">8,672</div>
+              <div class="kpi-delta">DAU ↑ 4.1%</div>
+            </div>
+            <div class="kpi-card accent">
+              <div class="kpi-label">付费用户</div>
+              <div class="kpi-value">412</div>
+              <div class="kpi-delta">朱砂 287 / 玉 96 / 金 29</div>
+            </div>
+            <div class="kpi-card">
+              <div class="kpi-label">营收</div>
+              <div class="kpi-value">¥ 18,462</div>
+              <div class="kpi-delta">↑ 8.7% vs 昨日</div>
+            </div>
+          </div>
+
+          <div class="kpi-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 18px;">
+            <div class="kpi-card">
+              <div class="kpi-label">墨客续费率</div>
+              <div class="kpi-value">—</div>
+              <div class="kpi-delta">永久免费 · 不追踪</div>
+            </div>
+            <div class="kpi-card success">
+              <div class="kpi-label">朱砂续费率</div>
+              <div class="kpi-value">78.4%</div>
+              <div class="kpi-delta">T+30d → T+60d</div>
+            </div>
+            <div class="kpi-card success">
+              <div class="kpi-label">玉续费率</div>
+              <div class="kpi-value">84.1%</div>
+              <div class="kpi-delta">↑ 2.1% vs 上周</div>
+            </div>
+            <div class="kpi-card accent">
+              <div class="kpi-label">金续费率</div>
+              <div class="kpi-value">92.3%</div>
+              <div class="kpi-delta">↑ 1.8% vs 上周</div>
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1.4fr 1fr; gap: 14px;">
+            <div class="card">
+              <h4>5 大模块使用占比（最近 7 天）</h4>
+              <table class="admin-table">
+                <thead><tr><th>模块</th><th>调用次数</th><th>占比</th><th>变化</th></tr></thead>
+                <tbody>
+                  <tr><td>塔罗</td><td class="mono">12,478</td><td><div style="display: flex; align-items: center; gap: 6px;"><div style="width: 80px; height: 4px; background: var(--surface-2); border-radius: 2px; overflow: hidden;"><div style="width: 38%; height: 100%; background: var(--accent);"></div></div><span class="mono">38%</span></div></td><td><span class="pill success">↑ 3.2%</span></td></tr>
+                  <tr><td>紫微</td><td class="mono">6,842</td><td><div style="display: flex; align-items: center; gap: 6px;"><div style="width: 80px; height: 4px; background: var(--surface-2); border-radius: 2px; overflow: hidden;"><div style="width: 21%; height: 100%; background: var(--accent);"></div></div><span class="mono">21%</span></div></td><td><span class="pill">—</span></td></tr>
+                  <tr><td>八字</td><td class="mono">5,238</td><td><div style="display: flex; align-items: center; gap: 6px;"><div style="width: 80px; height: 4px; background: var(--surface-2); border-radius: 2px; overflow: hidden;"><div style="width: 16%; height: 100%; background: var(--accent);"></div></div><span class="mono">16%</span></div></td><td><span class="pill warn">↓ 1.4%</span></td></tr>
+                  <tr><td>占星</td><td class="mono">4,612</td><td><div style="display: flex; align-items: center; gap: 6px;"><div style="width: 80px; height: 4px; background: var(--surface-2); border-radius: 2px; overflow: hidden;"><div style="width: 14%; height: 100%; background: var(--accent);"></div></div><span class="mono">14%</span></div></td><td><span class="pill success">↑ 0.8%</span></td></tr>
+                  <tr><td>数字命理</td><td class="mono">3,254</td><td><div style="display: flex; align-items: center; gap: 6px;"><div style="width: 80px; height: 4px; background: var(--surface-2); border-radius: 2px; overflow: hidden;"><div style="width: 11%; height: 100%; background: var(--accent);"></div></div><span class="mono">11%</span></div></td><td><span class="pill">—</span></td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="card">
+              <h4>订单时间轴告警</h4>
+              <div style="font-family: var(--font-mono); font-size: 11px; color: var(--muted); margin-bottom: 10px;">最近 1 小时 · 异常订单</div>
+              <div style="display: grid; gap: 8px;">
+                <div style="padding: 8px 10px; border: 1px solid oklch(94% 0.04 25); border-left: 3px solid var(--danger); background: oklch(98% 0.005 25); border-radius: 3px;">
+                  <div style="display: flex; justify-content: space-between;"><span style="font-size: 12px; color: var(--ink-deep);">重复支付 · 4 笔</span><span class="pill danger">高</span></div>
+                  <div style="font-size: 10px; color: var(--muted); font-family: var(--font-mono); margin-top: 2px;">同一 SoulAI 订单号 5 分钟内多次回调</div>
+                </div>
+                <div style="padding: 8px 10px; border: 1px solid oklch(94% 0.04 75); border-left: 3px solid var(--warn); background: oklch(98% 0.005 75); border-radius: 3px;">
+                  <div style="display: flex; justify-content: space-between;"><span style="font-size: 12px; color: var(--ink-deep);">退款待处理 · 7 笔</span><span class="pill warn">中</span></div>
+                  <div style="font-size: 10px; color: var(--muted); font-family: var(--font-mono); margin-top: 2px;">超 pending 3min · 需财务复核</div>
+                </div>
+                <div style="padding: 8px 10px; border: 1px solid oklch(94% 0.04 75); border-left: 3px solid var(--warn); background: oklch(98% 0.005 75); border-radius: 3px;">
+                  <div style="display: flex; justify-content: space-between;"><span style="font-size: 12px; color: var(--ink-deep);">辰时兜底停留 &gt; 5min · 12 用户</span><span class="pill warn">中</span></div>
+                  <div style="font-size: 10px; color: var(--muted); font-family: var(--font-mono); margin-top: 2px;">晨间仪轨下推失败 · 用户已跳转</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- ═══════════════════════════════════════════════════════════════ PART 07 · MOCKUP · Users -->
+
+<section class="section" id="mockup-users" data-od-id="mockup-users">
+  <div class="container">
+    <div class="eyebrow">PART 07 · MOCKUP · 用户管理</div>
+    <h2>5 档状态轴 + 注销冷静期 + wish-pack 用户视图</h2>
+    <p class="lede">D07 决策可视化：tier 命名对齐用户端 PART 19 状态轴（墨客 / 朱砂 / 玉 / 金 / 已过期）· 加注销冷静期字段 · 加 7 天朱砂到期用户清单 · 加 wish-pack 用户视图。</p>
+
+    <div class="mockup-frame">
+      <div class="mockup-header"><span class="label">MOCKUP · Users · v1.0</span><span>env · production · 共 8,672 用户 · 本页 25 / 347</span></div>
+      <div class="mockup-body">
+        <div class="mockup-sidebar">
+          <div class="side-title">SoulAI Admin</div>
+          <span class="side-env">PRODUCTION</span>
+          <ul class="side-nav">
+            <li><span class="icon muted">●</span> Dashboard</li>
+            <li class="active"><span class="icon">◆</span> Users</li>
+            <li><span class="icon muted">●</span> Payments</li>
+            <li><span class="icon muted">●</span> AI Masters</li>
+            <li><span class="icon muted">●</span> AI Providers</li>
+            <li><span class="icon muted">●</span> Readings</li>
+            <li><span class="icon muted">✕</span> <span style="text-decoration: line-through; opacity: 0.5;">Marketplace</span></li>
+            <li><span class="icon muted">●</span> 氛围运营</li>
+            <li><span class="icon muted">●</span> Safety</li>
+            <li><span class="icon muted">●</span> Feature Flags</li>
+            <li><span class="icon muted">●</span> Prompts</li>
+            <li><span class="icon muted">●</span> Audit</li>
+            <li><span class="icon muted">●</span> Security</li>
+            <li><span class="icon muted">●</span> Privacy</li>
+            <li><span class="icon muted">●</span> System</li>
+            <li><span class="icon muted">●</span> Analytics</li>
+          </ul>
+        </div>
+
+        <div class="mockup-content">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+            <div>
+              <h3 style="margin: 0;">用户管理</h3>
+              <div class="sub">修行档案而非社交资料 · 字段最小化 · 与用户端 v1.3.1 状态轴对齐</div>
+            </div>
+            <button style="padding: 8px 16px; background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600; cursor: pointer;">+ 导出全量数据</button>
+          </div>
+
+          <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 14px;">
+            <div class="kpi-card"><div class="kpi-label">全部</div><div class="kpi-value" style="font-size: 18px;">8,672</div></div>
+            <div class="kpi-card"><div class="kpi-label">墨客</div><div class="kpi-value" style="font-size: 18px; color: var(--muted);">7,973</div></div>
+            <div class="kpi-card accent"><div class="kpi-label">朱砂</div><div class="kpi-value" style="font-size: 18px; color: var(--accent-deep);">287</div></div>
+            <div class="kpi-card"><div class="kpi-label">玉</div><div class="kpi-value" style="font-size: 18px;">96</div></div>
+            <div class="kpi-card"><div class="kpi-label">金</div><div class="kpi-value" style="font-size: 18px;">29</div></div>
+            <div class="kpi-card danger"><div class="kpi-label">已过期 · T+X</div><div class="kpi-value" style="font-size: 18px; color: var(--danger);">287</div></div>
+          </div>
+
+          <div class="tab-row">
+            <div class="tab active">全部</div>
+            <div class="tab">朱砂 7 天到期</div>
+            <div class="tab">注销冷静期</div>
+            <div class="tab">心愿解签包</div>
+            <div class="tab">高风险标记</div>
+            <div class="tab">已注销</div>
+          </div>
+
+          <div style="display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap;">
+            <input placeholder="手机号 / 用户 ID" style="flex: 1; min-width: 200px; padding: 6px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px; font-family: var(--font-mono);" />
+            <select style="padding: 6px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px;">
+              <option>等级 · 全部</option>
+              <option>墨客</option>
+              <option>朱砂</option>
+              <option>玉</option>
+              <option>金</option>
+              <option>已过期</option>
+            </select>
+            <select style="padding: 6px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px;">
+              <option>language · 全部</option>
+              <option>zh-CN</option>
+              <option>en</option>
+              <option>vi</option>
+              <option>th</option>
+              <option>my</option>
+            </select>
+            <select style="padding: 6px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px;">
+              <option>状态 · 全部</option>
+              <option>有效</option>
+              <option>已过期</option>
+              <option>注销冷静期</option>
+            </select>
+          </div>
+
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>用户 ID</th>
+                <th>手机号</th>
+                <th>等级 · 状态</th>
+                <th>有效期至</th>
+                <th>大师文字</th>
+                <th>心愿解签</th>
+                <th>注册时间</th>
+                <th>language</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="mono">u_a3f9c2d8</td>
+                <td class="mono">138****2173</td>
+                <td><span class="pill accent">朱砂</span> · <span class="pill success">有效</span></td>
+                <td class="mono">2026.08.15</td>
+                <td class="mono">42 / 60</td>
+                <td class="mono">3 包</td>
+                <td class="mono">2026.03.12</td>
+                <td class="mono">zh-CN</td>
+                <td><div class="row-actions"><button>详情</button><button>笔记</button><button>导出</button></div></td>
+              </tr>
+              <tr>
+                <td class="mono">u_b7e1d9c4</td>
+                <td class="mono">139****8832</td>
+                <td><span class="pill">墨客</span> · <span class="pill success">永久免费</span></td>
+                <td class="mono">—</td>
+                <td class="mono">— / —</td>
+                <td class="mono">—</td>
+                <td class="mono">2026.05.28</td>
+                <td class="mono">en</td>
+                <td><div class="row-actions"><button>详情</button><button>笔记</button><button>导出</button></div></td>
+              </tr>
+              <tr>
+                <td class="mono">u_e2c4b1a5</td>
+                <td class="mono">186****5521</td>
+                <td><span class="pill accent">朱砂</span> · <span class="pill warn">T-3d</span></td>
+                <td class="mono">2026.07.04</td>
+                <td class="mono">58 / 60</td>
+                <td class="mono">1 包</td>
+                <td class="mono">2025.07.04</td>
+                <td class="mono">zh-CN</td>
+                <td><div class="row-actions"><button>详情</button><button>笔记</button><button class="danger">强制续</button></div></td>
+              </tr>
+              <tr>
+                <td class="mono">u_f8d6e3a2</td>
+                <td class="mono">+84****8821</td>
+                <td><span class="pill">玉</span> · <span class="pill success">有效</span></td>
+                <td class="mono">2026.09.18</td>
+                <td class="mono">无限</td>
+                <td class="mono">5 包</td>
+                <td class="mono">2025.09.18</td>
+                <td class="mono">vi</td>
+                <td><div class="row-actions"><button>详情</button><button>笔记</button><button>导出</button></div></td>
+              </tr>
+              <tr style="background: oklch(98% 0.005 25);">
+                <td class="mono">u_9b8c7d6e</td>
+                <td class="mono">+66****4218</td>
+                <td><span class="pill danger">已过期</span> · <span class="pill warn">T+X · 12d</span></td>
+                <td class="mono">2026.06.19</td>
+                <td class="mono">—</td>
+                <td class="mono">—</td>
+                <td class="mono">2025.06.19</td>
+                <td class="mono">th</td>
+                <td><div class="row-actions"><button>详情</button><button>笔记</button><button>恢复</button></div></td>
+              </tr>
+              <tr style="background: oklch(98% 0.005 240);">
+                <td class="mono">u_4f2e1d8c</td>
+                <td class="mono">+60****9834</td>
+                <td><span class="pill">墨客</span> · <span class="pill info">注销冷静期 · 8d</span></td>
+                <td class="mono">—</td>
+                <td class="mono">已冻结</td>
+                <td class="mono">已冻结</td>
+                <td class="mono">2024.11.02</td>
+                <td class="mono">my</td>
+                <td><div class="row-actions"><button>详情</button><button>笔记</button><button>恢复账号</button></div></td>
+              </tr>
+              <tr>
+                <td class="mono">u_1a2b3c4d</td>
+                <td class="mono">137****6612</td>
+                <td><span class="pill">金</span> · <span class="pill success">年度有效</span></td>
+                <td class="mono">2027.01.20</td>
+                <td class="mono">无限</td>
+                <td class="mono">无限</td>
+                <td class="mono">2025.01.20</td>
+                <td class="mono">zh-CN</td>
+                <td><div class="row-actions"><button>详情</button><button>笔记</button><button>导出</button></div></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 12px; font-family: var(--font-mono); font-size: 11px; color: var(--muted);">
+            <span>显示 1-25 / 共 347 · 已筛选 8,672</span>
+            <span>第 1 页 / 共 14 页 · ‹ 1 2 3 4 5 ... 14 ›</span>
+          </div>
+
+          <div class="note-block" style="margin-top: 20px;">
+            <div class="note-title">v0.9 注销冷静期 · 15 天规则</div>
+            <p>用户提交注销申请 → 15 天冷静期（账号冻结 · 数据保留 · 用户可恢复）→ 15 天后物理行删除 + CDN 缓存清除。注销期间已消耗的会员时长 / 心愿印章 / 大师按条额度<strong>不退款</strong>（详见《SoulAI 用户协议》第 X 条 · v0.9 决策）。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- ═══════════════════════════════════════════════════════════════ PART 08 · MOCKUP · Payments -->
+
+<section class="section" id="mockup-payments" data-od-id="mockup-payments">
+  <div class="container">
+    <div class="eyebrow">PART 08 · MOCKUP · 支付管理 · 订单详情 5 节点时间轴</div>
+    <h2>复用用户端 MOCKUP 13 · 5 节点时间轴 · 三方回执号脱敏 · 不暴露 SDK 字段</h2>
+    <p class="lede">D05 决策可视化：复用用户端 v1.2 MOCKUP 13 订单详情模式 · 5 节点（创建 / 调起 / 授权 / 回跳落印 / 逾期）· 三方回执号脱敏 + 不暴露 SDK 字段（prepay_id / nonce_str / 商户证书）· 重复支付标记 · 退款冷静期仅 pending ≤ 3min · 大师按条逆逻辑判定入账。</p>
+
+    <div class="mockup-pair">
+      <div class="mockup-frame">
+        <div class="mockup-header"><span class="label">MOCKUP · Payments · 订单列表 · v1.0</span><span>env · production · 本页 25 / 4,238</span></div>
+        <div class="mockup-content">
+          <h3 style="margin-bottom: 4px;">支付订单</h3>
+          <div class="sub">6 态状态机 · pending / success / failed / cancelled / refunded / partial · 大师按条逆逻辑判定入账字段</div>
+
+          <div style="display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap;">
+            <select style="padding: 6px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px;">
+              <option>状态 · 全部</option>
+              <option>pending</option>
+              <option>success</option>
+              <option>failed</option>
+              <option>cancelled</option>
+              <option>refunded</option>
+              <option>partial</option>
+            </select>
+            <select style="padding: 6px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px;">
+              <option>渠道 · 全部</option>
+              <option>alipay</option>
+              <option>wechat</option>
+              <option>apple_pay</option>
+            </select>
+            <select style="padding: 6px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px;">
+              <option>SKU · 全部</option>
+              <option>朱砂月 ¥28</option>
+              <option>玉月 ¥68</option>
+              <option>金年 ¥218</option>
+              <option>大师文字 ¥3/条</option>
+              <option>AI 解读 ¥6</option>
+              <option>心愿印章 ¥1</option>
+              <option>心愿解签包 ¥12</option>
+            </select>
+            <input type="date" style="padding: 6px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px;" />
+            <span style="color: var(--muted); font-size: 11px; align-self: center;">—</span>
+            <input type="date" style="padding: 6px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px;" />
+            <button style="margin-left: auto; padding: 6px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 11px; color: var(--muted); cursor: pointer;">导出 CSV</button>
+          </div>
+
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>订单 ID</th>
+                <th>用户</th>
+                <th>SKU</th>
+                <th>金额</th>
+                <th>渠道</th>
+                <th>状态</th>
+                <th>5 节点</th>
+                <th>大师按条</th>
+                <th>时间</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="mono">o_a3f9c2d8</td>
+                <td class="mono">u_a3f9...</td>
+                <td>朱砂月</td>
+                <td class="mono">¥28.00</td>
+                <td>alipay</td>
+                <td><span class="pill success">success</span></td>
+                <td><div style="display: flex; gap: 2px;"><div style="width: 6px; height: 6px; background: var(--success); border-radius: 50%;"></div><div style="width: 6px; height: 6px; background: var(--success); border-radius: 50%;"></div><div style="width: 6px; height: 6px; background: var(--success); border-radius: 50%;"></div><div style="width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: pulse 1.4s ease-in-out infinite;"></div><div style="width: 6px; height: 6px; background: var(--surface-2); border-radius: 50%; border: 1px solid var(--border);"></div></div></td>
+                <td><span style="color: var(--muted);">—</span></td>
+                <td class="mono">07.01 14:32</td>
+                <td><div class="row-actions"><button>详情</button></div></td>
+              </tr>
+              <tr style="background: oklch(98% 0.005 25);">
+                <td class="mono">o_b7e1d9c4</td>
+                <td class="mono">u_b7e1...</td>
+                <td>大师文字</td>
+                <td class="mono">¥3.00</td>
+                <td>wechat</td>
+                <td><span class="pill warn">pending</span></td>
+                <td><div style="display: flex; gap: 2px;"><div style="width: 6px; height: 6px; background: var(--success); border-radius: 50%;"></div><div style="width: 6px; height: 6px; background: var(--accent); border-radius: 50%; animation: pulse 1.4s ease-in-out infinite;"></div><div style="width: 6px; height: 6px; background: var(--surface-2); border-radius: 50%; border: 1px solid var(--border);"></div><div style="width: 6px; height: 6px; background: var(--surface-2); border-radius: 50%; border: 1px solid var(--border);"></div><div style="width: 6px; height: 6px; background: var(--surface-2); border-radius: 50%; border: 1px solid var(--border);"></div></div></td>
+                <td><span class="pill accent">先扣会员</span></td>
+                <td class="mono">07.01 14:31</td>
+                <td><div class="row-actions"><button>详情</button></div></td>
+              </tr>
+              <tr style="background: oklch(98% 0.005 25);">
+                <td class="mono">o_e2c4b1a5</td>
+                <td class="mono">u_e2c4...</td>
+                <td>朱砂月</td>
+                <td class="mono">¥28.00</td>
+                <td>alipay</td>
+                <td><span class="pill danger">重复支付</span></td>
+                <td><div style="display: flex; gap: 2px;"><div style="width: 6px; height: 6px; background: var(--success); border-radius: 50%;"></div><div style="width: 6px; height: 6px; background: var(--success); border-radius: 50%;"></div><div style="width: 6px; height: 6px; background: var(--success); border-radius: 50%;"></div><div style="width: 6px; height: 6px; background: var(--success); border-radius: 50%;"></div><div style="width: 6px; height: 6px; background: var(--danger); border-radius: 50%;"></div></div></td>
+                <td><span style="color: var(--muted);">—</span></td>
+                <td class="mono">07.01 14:28</td>
+                <td><div class="row-actions"><button>详情</button><button class="danger">退款</button></div></td>
+              </tr>
+              <tr>
+                <td class="mono">o_f8d6e3a2</td>
+                <td class="mono">u_f8d6...</td>
+                <td>心愿解签包</td>
+                <td class="mono">¥12.00</td>
+                <td>wechat</td>
+                <td><span class="pill success">success</span></td>
+                <td><div style="display: flex; gap: 2px;"><div style="width: 6px; height: 6px; background: var(--success); border-radius: 50%;"></div><div style="width: 6px; height: 6px; background: var(--success); border-radius: 50%;"></div><div style="width: 6px; height: 6px; background: var(--success); border-radius: 50%;"></div><div style="width: 6px; height: 6px; background: var(--success); border-radius: 50%;"></div><div style="width: 6px; height: 6px; background: var(--surface-2); border-radius: 50%; border: 1px solid var(--border);"></div></div></td>
+                <td><span style="color: var(--muted);">—</span></td>
+                <td class="mono">07.01 13:54</td>
+                <td><div class="row-actions"><button>详情</button></div></td>
+              </tr>
+              <tr>
+                <td class="mono">o_9b8c7d6e</td>
+                <td class="mono">u_9b8c...</td>
+                <td>金年</td>
+                <td class="mono">¥218.00</td>
+                <td>apple_pay</td>
+                <td><span class="pill success">success</span></td>
+                <td><div style="display: flex; gap: 2px;"><div style="width: 6px; height: 6px; background: var(--success); border-radius: 50%;"></div><div style="width: 6px; height: 6px; background: var(--success); border-radius: 50%;"></div><div style="width: 6px; height: 6px; background: var(--success); border-radius: 50%;"></div><div style="width: 6px; height: 6px; background: var(--success); border-radius: 50%;"></div><div style="width: 6px; height: 6px; background: var(--surface-2); border-radius: 50%; border: 1px solid var(--border);"></div></div></td>
+                <td><span style="color: var(--muted);">—</span></td>
+                <td class="mono">07.01 12:18</td>
+                <td><div class="row-actions"><button>详情</button></div></td>
+              </tr>
+            </tbody>
+          </table>
+
+          <div style="display: flex; justify-content: space-between; margin-top: 12px; font-family: var(--font-mono); font-size: 11px; color: var(--muted);">
+            <span>显示 1-25 / 共 4,238</span>
+            <span>第 1 页 / 共 170 页 · ‹ 1 2 3 4 5 ... 170 ›</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="mockup-frame">
+        <div class="mockup-header"><span class="label">MOCKUP · Payments · 订单详情 · v1.0</span><span>o_a3f9c2d8 · success · 5 节点 current STEP 04</span></div>
+        <div class="mockup-content">
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+            <span style="font-size: 13px; color: var(--muted);">‹ 返回</span>
+            <span style="font-family: var(--font-display); font-size: 16px; color: var(--ink-deep);">订单详情</span>
+            <span style="margin-left: auto; padding: 3px 8px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 3px; font-family: var(--font-mono); font-size: 10px; color: var(--muted); cursor: pointer;">SSR · legal.soulai.app</span>
+            <button style="padding: 4px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 3px; font-size: 11px; color: var(--muted); cursor: pointer;">复制单号</button>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 16px; padding: 14px; background: var(--surface-2); border-radius: var(--radius-sm); margin-bottom: 16px;">
+            <div style="width: 56px; height: 56px; background: var(--accent); border-radius: 2px; display: flex; align-items: center; justify-content: center; color: white; font-family: var(--font-display); font-size: 22px;">实</div>
+            <div>
+              <div style="font-family: var(--font-display); font-size: 16px; color: var(--ink-deep);">朱砂 · 月度</div>
+              <div style="font-size: 12px; color: var(--muted); font-family: var(--font-mono); margin-top: 2px;">¥28.00 · alipay · success · 印章已落印</div>
+            </div>
+            <div style="margin-left: auto; text-align: right;">
+              <div style="font-size: 11px; color: var(--muted); font-family: var(--font-mono);">下单 · 落印 间隔</div>
+              <div style="font-size: 14px; color: var(--ink-deep); font-family: var(--font-mono);">2.4s</div>
+            </div>
+          </div>
+
+          <div class="note-block" style="font-size: 11px; color: var(--muted); border-left-color: var(--info); margin-bottom: 16px;">
+            <div class="note-title" style="color: oklch(35% 0.12 240);">本页不展示 SDK 内部字段</div>
+            <code class="mono" style="color: var(--muted);">prepay_id / nonce_str / appid / 商户证书 / RSA 签名</code> 一律不出现 · 用户可凭三方交易号脱敏号到对应渠道自助查询
+          </div>
+
+          <h4 style="margin-bottom: 8px;">5 节点时间轴 · v1.3.1 决策落地</h4>
+          <div style="margin-bottom: 16px;">
+            <div class="timeline-row"><div class="tl-time">14:32:08</div><div class="tl-dot done"></div><div class="tl-content"><div class="tl-step">STEP 01 · 下单创建</div><div class="tl-label">前端发起订单 · 写入 orders 表 · 创建 SoulAI 订单号</div></div></div>
+            <div class="timeline-row"><div class="tl-time">14:32:09</div><div class="tl-dot done"></div><div class="tl-content"><div class="tl-step">STEP 02 · 调起支付</div><div class="tl-label">前端唤起支付宝 SDK · 传入脱敏 orderId · 拿回三方交易号（脱敏）</div></div></div>
+            <div class="timeline-row"><div class="tl-time">14:32:10</div><div class="tl-dot done"></div><div class="tl-content"><div class="tl-step">STEP 03 · 用户授权</div><div class="tl-label">用户在支付宝侧完成密码 / 指纹授权</div></div></div>
+            <div class="timeline-row"><div class="tl-time">14:32:11</div><div class="tl-dot current"></div><div class="tl-content"><div class="tl-step">STEP 04 · 回跳落印 · current · 朱砂 pulse 1.4s</div><div class="tl-label">三方回调到 SoulAI 后端 · 验证签名 · 更新订单状态 · 写入朱砂印章 30 日</div></div></div>
+            <div class="timeline-row"><div class="tl-time">—</div><div class="tl-dot skip"></div><div class="tl-content"><div class="tl-step">STEP 05 · 逾期关单</div><div class="tl-label">未触发 · 当前订单 60min 内已完成</div></div></div>
+          </div>
+
+          <h4 style="margin-bottom: 8px;">支付渠道 · 三方回执号脱敏</h4>
+          <div class="field-row"><div class="field-label">支付方式</div><div class="field-value">alipay · 支付宝</div><div class="field-meta">2026.07.01 14:32:11</div></div>
+          <div class="field-row"><div class="field-label">三方交易号</div><div class="field-value">4200****7821</div><div class="field-meta"><button style="font-family: var(--font-mono); font-size: 9px; padding: 2px 6px; border: 1px solid var(--border); background: var(--surface); border-radius: 2px; cursor: pointer;">复制</button></div></div>
+          <div class="field-row"><div class="field-label">商户单号</div><div class="field-value">S20260615094****</div><div class="field-meta"><button style="font-family: var(--font-mono); font-size: 9px; padding: 2px 6px; border: 1px solid var(--border); background: var(--surface); border-radius: 2px; cursor: pointer;">复制</button></div></div>
+          <div class="field-row"><div class="field-label">SoulAI 订单号</div><div class="field-value">o_a3f9c2d8</div><div class="field-meta"><button style="font-family: var(--font-mono); font-size: 9px; padding: 2px 6px; border: 1px solid var(--border); background: var(--surface); border-radius: 2px; cursor: pointer;">复制</button></div></div>
+          <div class="field-row"><div class="field-label">会员生效</div><div class="field-value">朱砂 · 30 日 · 至 2026.08.15</div><div class="field-meta">success</div></div>
+
+          <div style="display: flex; gap: 8px; margin-top: 16px; padding-top: 14px; border-top: 1px dashed var(--border);">
+            <button style="padding: 6px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 11px; color: var(--muted); cursor: pointer;">申请重开发票</button>
+            <button style="padding: 6px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 11px; color: var(--muted); cursor: pointer;">查看权益</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note-block">
+      <div class="note-title">v1.1 单次付费不退款 · admin 端落地</div>
+      <p>单次付费订单（¥1 / ¥3 / ¥6 / ¥12）状态进入 <code class="mono">success</code> 后不可退款，仅「未执行 + pending ≤ 3min」可退款（详见《SoulAI 付费协议》第 Y 条）。大师按条逆逻辑判定入账字段：朱砂档 60 条/月免费优先扣，<strong>不足后按单价扣费</strong>，财务端按「先扣会员次数 · 不足后再走单次」判定入账。</p>
+    </div>
+  </div>
+</section>
+<!-- ═══════════════════════════════════════════════════════════════ PART 09 · MOCKUP · AI Masters -->
+
+<section class="section" id="mockup-masters" data-od-id="mockup-masters">
+  <div class="container">
+    <div class="eyebrow">PART 09 · MOCKUP · 大师管理 · v0.5 弥勒寺采样计划字段</div>
+    <h2>5 位大师 · 弥勒寺采样 · 真人克隆授权 · 备播方案</h2>
+    <p class="lede">D03 决策可视化：5 位大师固定（玄真子 / 慧明 / 灵隐 / Aurora / Luna）· 加「弥勒寺采样计划」字段（采样窗口 / 真人克隆授权链路 / 备播方案 / 替换排期）· 严禁纯合成音替代标记。</p>
+
+    <div class="mockup-frame">
+      <div class="mockup-header"><span class="label">MOCKUP · AI Masters · v1.0 · 弥勒寺采样计划 v0.5 决策</span><span>5 位大师 · 3 在录 · 2 待启动</span></div>
+      <div class="mockup-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+          <div>
+            <h3 style="margin: 0;">AI 大师管理</h3>
+            <div class="sub">弥勒寺合作采样 · 真人克隆授权 · 备播方案 · 与用户端 PART 16/20 大师聊天对齐</div>
+          </div>
+          <button style="padding: 8px 16px; background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600; cursor: pointer;">+ 新建大师</button>
+        </div>
+
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>大师</th>
+              <th>类别</th>
+              <th>声线</th>
+              <th>采样计划</th>
+              <th>授权链路</th>
+              <th>备播</th>
+              <th>prompt</th>
+              <th>状态</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="mono">m_001</td>
+              <td><div style="display: flex; align-items: center; gap: 8px;"><div style="width: 28px; height: 28px; background: var(--accent); border-radius: 2px; display: flex; align-items: center; justify-content: center; color: white; font-family: var(--font-display); font-size: 14px;">玄</div><div><div style="font-family: var(--font-display); font-size: 13px;">玄真子</div><div style="font-family: var(--font-mono); font-size: 10px; color: var(--muted);">xuanzhen</div></div></div></td>
+              <td>东方 · divination</td>
+              <td><span class="pill accent">青铜钟</span><div style="font-size: 10px; color: var(--muted); font-family: var(--font-mono); margin-top: 2px;">110-130Hz · 1.0×</div></td>
+              <td><span class="pill success">弥勒寺 2026.08.12-15</span><div style="font-size: 10px; color: var(--muted); font-family: var(--font-mono); margin-top: 2px;">window · 4 days</div></td>
+              <td><span class="pill success">已签 · 2026.07.01</span><div style="font-size: 10px; color: var(--muted); font-family: var(--font-mono); margin-top: 2px;">clauses · 6 / 6</div></td>
+              <td><span class="pill warn">声优录制</span><div style="font-size: 10px; color: var(--muted); font-family: var(--font-mono); margin-top: 2px;">v0.5 文字期</div></td>
+              <td><span class="mono" style="font-size: 10px;">v2.3</span><br/><span style="font-size: 10px; color: var(--muted);">14,782 calls/24h</span></td>
+              <td><span class="pill success">active</span></td>
+              <td><div class="row-actions"><button>采样</button><button>prompts</button><button>测试</button></div></td>
+            </tr>
+            <tr>
+              <td class="mono">m_002</td>
+              <td><div style="display: flex; align-items: center; gap: 8px;"><div style="width: 28px; height: 28px; background: var(--accent); border-radius: 2px; display: flex; align-items: center; justify-content: center; color: white; font-family: var(--font-display); font-size: 14px;">慧</div><div><div style="font-family: var(--font-display); font-size: 13px;">慧明</div><div style="font-family: var(--font-mono); font-size: 10px; color: var(--muted);">huiming</div></div></div></td>
+              <td>东方 · divination</td>
+              <td><span class="pill accent">磬</span><div style="font-size: 10px; color: var(--muted); font-family: var(--font-mono); margin-top: 2px;">220-260Hz · 0.95×</div></td>
+              <td><span class="pill success">弥勒寺 2026.08.12-15</span><div style="font-size: 10px; color: var(--muted); font-family: var(--font-mono); margin-top: 2px;">window · 4 days</div></td>
+              <td><span class="pill success">已签 · 2026.07.01</span><div style="font-size: 10px; color: var(--muted); font-family: var(--font-mono); margin-top: 2px;">clauses · 6 / 6</div></td>
+              <td><span class="pill warn">声优录制</span><div style="font-size: 10px; color: var(--muted); font-family: var(--font-mono); margin-top: 2px;">v0.5 文字期</div></td>
+              <td><span class="mono" style="font-size: 10px;">v1.8</span><br/><span style="font-size: 10px; color: var(--muted);">9,234 calls/24h</span></td>
+              <td><span class="pill success">active</span></td>
+              <td><div class="row-actions"><button>采样</button><button>prompts</button><button>测试</button></div></td>
+            </tr>
+            <tr>
+              <td class="mono">m_003</td>
+              <td><div style="display: flex; align-items: center; gap: 8px;"><div style="width: 28px; height: 28px; background: var(--accent); border-radius: 2px; display: flex; align-items: center; justify-content: center; color: white; font-family: var(--font-display); font-size: 14px;">灵</div><div><div style="font-family: var(--font-display); font-size: 13px;">灵隐</div><div style="font-family: var(--font-mono); font-size: 10px; color: var(--muted);">lingyin</div></div></div></td>
+              <td>东方 · divination</td>
+              <td><span class="pill accent">木鱼双叩</span><div style="font-size: 10px; color: var(--muted); font-family: var(--font-mono); margin-top: 2px;">85-105Hz · 1.05×</div></td>
+              <td><span class="pill success">弥勒寺 2026.08.12-15</span><div style="font-size: 10px; color: var(--muted); font-family: var(--font-mono); margin-top: 2px;">window · 4 days</div></td>
+              <td><span class="pill success">已签 · 2026.07.01</span><div style="font-size: 10px; color: var(--muted); font-family: var(--font-mono); margin-top: 2px;">clauses · 6 / 6</div></td>
+              <td><span class="pill warn">声优录制</span><div style="font-size: 10px; color: var(--muted); font-family: var(--font-mono); margin-top: 2px;">v0.5 文字期</div></td>
+              <td><span class="mono" style="font-size: 10px;">v1.2</span><br/><span style="font-size: 10px; color: var(--muted);">7,621 calls/24h</span></td>
+              <td><span class="pill success">active</span></td>
+              <td><div class="row-actions"><button>采样</button><button>prompts</button><button>测试</button></div></td>
+            </tr>
+            <tr>
+              <td class="mono">m_004</td>
+              <td><div style="display: flex; align-items: center; gap: 8px;"><div style="width: 28px; height: 28px; background: var(--info); border-radius: 2px; display: flex; align-items: center; justify-content: center; color: white; font-family: var(--font-display); font-size: 14px;">A</div><div><div style="font-family: var(--font-display); font-size: 13px;">Aurora</div><div style="font-family: var(--font-mono); font-size: 10px; color: var(--muted);">aurora</div></div></div></td>
+              <td>西方 · wellness</td>
+              <td><span class="pill info">风铃</span><div style="font-size: 10px; color: var(--muted); font-family: var(--font-mono); margin-top: 2px;">580-720Hz · 1.1×</div></td>
+              <td><span class="pill warn">待启动</span><div style="font-size: 10px; color: var(--muted); font-family: var(--font-mono); margin-top: 2px;">真人声源签约中</div></td>
+              <td><span class="pill">签约中 · 4 / 6</span><div style="font-size: 10px; color: var(--muted); font-family: var(--font-mono); margin-top: 2px;">missing · 录音 + 肖像</div></td>
+              <td><span class="pill muted">—</span><div style="font-size: 10px; color: var(--muted); font-family: var(--font-mono); margin-top: 2px;">等待授权</div></td>
+              <td><span class="mono" style="font-size: 10px;">v0.8</span><br/><span style="font-size: 10px; color: var(--muted);">3,428 calls/24h</span></td>
+              <td><span class="pill warn">sampling</span></td>
+              <td><div class="row-actions"><button>采样</button><button>prompts</button><button>测试</button></div></td>
+            </tr>
+            <tr>
+              <td class="mono">m_005</td>
+              <td><div style="display: flex; align-items: center; gap: 8px;"><div style="width: 28px; height: 28px; background: var(--info); border-radius: 2px; display: flex; align-items: center; justify-content: center; color: white; font-family: var(--font-display); font-size: 14px;">L</div><div><div style="font-family: var(--font-display); font-size: 13px;">Luna</div><div style="font-family: var(--font-mono); font-size: 10px; color: var(--muted);">luna</div></div></div></td>
+              <td>西方 · wellness</td>
+              <td><span class="pill info">三角铁</span><div style="font-size: 10px; color: var(--muted); font-family: var(--font-mono); margin-top: 2px;">1.2-1.8kHz · 1.15×</div></td>
+              <td><span class="pill warn">待启动</span><div style="font-size: 10px; color: var(--muted); font-family: var(--font-mono); margin-top: 2px;">真人声源签约中</div></td>
+              <td><span class="pill">签约中 · 3 / 6</span><div style="font-size: 10px; color: var(--muted); font-family: var(--font-mono); margin-top: 2px;">missing · 录音 + 肖像</div></td>
+              <td><span class="pill muted">—</span><div style="font-size: 10px; color: var(--muted); font-family: var(--font-mono); margin-top: 2px;">等待授权</div></td>
+              <td><span class="mono" style="font-size: 10px;">v0.6</span><br/><span style="font-size: 10px; color: var(--muted);">2,184 calls/24h</span></td>
+              <td><span class="pill warn">sampling</span></td>
+              <td><div class="row-actions"><button>采样</button><button>prompts</button><button>测试</button></div></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <div style="display: flex; justify-content: space-between; margin-top: 12px; font-family: var(--font-mono); font-size: 11px; color: var(--muted);">
+          <span>5 位大师 · active 3 / sampling 2 · 24h 合计 37,249 calls · 失败率 1.2%</span>
+          <span>下一里程碑 · 弥勒寺采样 2026.08.12 启动</span>
+        </div>
+
+        <div class="note-block" style="margin-top: 20px;">
+          <div class="note-title">v0.5 大师声线录制路线</div>
+          <p><strong>东方 3 位</strong>（玄真子 / 慧明 / 灵隐）赴弥勒寺实地采样（2026.08.12-15 窗口）→ 高保真录制 → 真人克隆授权链路（6 个条款）→ v1.0 起替换为真实采样声音；<strong>西方 2 位</strong>（Aurora / Luna）真人声源签约中 → 录音 + 肖像授权 → 真人克隆；<strong>v0.5 文字期</strong>用声优录制作为备播方案（标注明确）；<strong>严禁纯合成音替代</strong>（AGENTS.md 安全边界 + v0.5 决策）。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- ═══════════════════════════════════════════════════════════════ PART 10 · MOCKUP · Privacy -->
+
+<section class="section" id="mockup-privacy" data-od-id="mockup-privacy">
+  <div class="container">
+    <div class="eyebrow">PART 10 · MOCKUP · 法务 / 隐私 / 40 文档追踪 + locales.json 编辑</div>
+    <h2>locales.json 在线编辑 · hash 校验 · SSR 监控 · 5 埋点告警</h2>
+    <p class="lede">D04 + D06 决策可视化：40 份文档（8 slug × 5 locale）的在线编辑 + hash 校验 + SSR 渲染缓存监控 + 5 埋点告警视图 + 注销冷静期 15 天流程 + locales.json 字典外提。</p>
+
+    <div class="mockup-frame">
+      <div class="mockup-header"><span class="label">MOCKUP · Privacy · v1.0 · 40 文档追踪 + locales.json 编辑</span><span>14 done / 4 in-translate / 1 in-legal / 21 todo = 40 · 35%</span></div>
+      <div class="mockup-content">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+          <div>
+            <h3 style="margin: 0;">法务与隐私管理</h3>
+            <div class="sub">40 文档追踪 · locales.json 编辑 · hash 校验 · SSR 渲染监控 · 与用户端 PART 23 + v1.3.1 locales.json 对齐</div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button style="padding: 8px 16px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: 12px; color: var(--muted); cursor: pointer;">导出 audit log</button>
+            <button style="padding: 8px 16px; background: var(--accent); color: white; border: none; border-radius: var(--radius-sm); font-size: 12px; font-weight: 600; cursor: pointer;">+ 编辑 locales.json</button>
+          </div>
+        </div>
+
+        <div class="tab-row">
+          <div class="tab active">40 文档追踪</div>
+          <div class="tab">隐私请求</div>
+          <div class="tab">合规审计</div>
+          <div class="tab">locales.json 编辑</div>
+          <div class="tab">SSR 监控</div>
+          <div class="tab">5 埋点告警</div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px;">
+          <div class="kpi-card success"><div class="kpi-label">done · 已上线</div><div class="kpi-value" style="font-size: 18px;">14</div><div class="kpi-delta">35%</div></div>
+          <div class="kpi-card" style="background: oklch(94% 0.04 75); border-color: oklch(75% 0.10 75);"><div class="kpi-label">in-translate · 翻译中</div><div class="kpi-value" style="font-size: 18px; color: oklch(35% 0.14 75);">4</div><div class="kpi-delta">10%</div></div>
+          <div class="kpi-card" style="background: var(--v131-tag); border-color: oklch(75% 0.10 200);"><div class="kpi-label">in-legal · 法务终审</div><div class="kpi-value" style="font-size: 18px; color: oklch(35% 0.08 200);">1</div><div class="kpi-delta">2.5%</div></div>
+          <div class="kpi-card"><div class="kpi-label">todo · 待启动</div><div class="kpi-value" style="font-size: 18px; color: var(--muted);">21</div><div class="kpi-delta">52.5%</div></div>
+        </div>
+
+        <h4 style="margin-bottom: 8px;">locales.json · 5 locale × 8 slug 进度矩阵</h4>
+        <table class="doc-matrix">
+          <thead>
+            <tr>
+              <th>slug · 8</th>
+              <th>zh-CN · 8/8</th>
+              <th>en · 4/8</th>
+              <th>vi · 2/8</th>
+              <th>th · 0/8</th>
+              <th>my · 0/8</th>
+              <th>hash 校验</th>
+              <th>minAppVersion</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="text-align: left;"><span class="mono">privacy</span> · 必读</td>
+              <td class="cell-done">done · a3f9c2d</td>
+              <td class="cell-done">done · 8e7b1f2</td>
+              <td class="cell-done">done · 4c2d9e8</td>
+              <td class="cell-trans">in-translate · 翻译公司</td>
+              <td class="cell-todo">todo · —</td>
+              <td><span class="pill success">✓ match</span></td>
+              <td><span class="mono">2.0+</span></td>
+            </tr>
+            <tr>
+              <td style="text-align: left;"><span class="mono">terms</span> · 必读</td>
+              <td class="cell-done">done · f8d6e3a</td>
+              <td class="cell-done">done · 1a2b3c4</td>
+              <td class="cell-done">done · 9b8c7d6</td>
+              <td class="cell-trans">in-translate · 翻译公司</td>
+              <td class="cell-todo">todo · —</td>
+              <td><span class="pill success">✓ match</span></td>
+              <td><span class="mono">2.0+</span></td>
+            </tr>
+            <tr>
+              <td style="text-align: left;"><span class="mono">cookie</span></td>
+              <td class="cell-done">done · 5e4d3c2</td>
+              <td class="cell-done">done · b7e1d9c</td>
+              <td class="cell-trans">in-translate · 翻译公司</td>
+              <td class="cell-todo">todo · —</td>
+              <td class="cell-todo">todo · —</td>
+              <td><span class="pill success">✓ match</span></td>
+              <td><span class="mono">2.0+</span></td>
+            </tr>
+            <tr>
+              <td style="text-align: left;"><span class="mono">third-party</span></td>
+              <td class="cell-done">done · 4f2e1d8</td>
+              <td class="cell-legal">in-legal · 法务终审</td>
+              <td class="cell-todo">todo · —</td>
+              <td class="cell-todo">todo · —</td>
+              <td class="cell-todo">todo · —</td>
+              <td><span class="pill warn">⚠ stale</span></td>
+              <td><span class="mono">2.0+</span></td>
+            </tr>
+            <tr>
+              <td style="text-align: left;"><span class="mono">about</span></td>
+              <td class="cell-done">done · 3c1b9a7</td>
+              <td class="cell-done">done · 7d5e3c1</td>
+              <td class="cell-todo">todo · —</td>
+              <td class="cell-todo">todo · —</td>
+              <td class="cell-todo">todo · —</td>
+              <td><span class="pill success">✓ match</span></td>
+              <td><span class="mono">2.0+</span></td>
+            </tr>
+            <tr>
+              <td style="text-align: left;"><span class="mono">icp</span></td>
+              <td class="cell-done">done · 2a8b6c4</td>
+              <td class="cell-todo">todo · —</td>
+              <td class="cell-todo">todo · —</td>
+              <td class="cell-todo">todo · —</td>
+              <td class="cell-todo">todo · —</td>
+              <td><span class="pill">n/a</span></td>
+              <td><span class="mono">2.0+</span></td>
+            </tr>
+            <tr>
+              <td style="text-align: left;"><span class="mono">wenwang</span></td>
+              <td class="cell-done">done · 6d4c2b1</td>
+              <td class="cell-todo">todo · —</td>
+              <td class="cell-todo">todo · —</td>
+              <td class="cell-todo">todo · —</td>
+              <td class="cell-todo">todo · —</td>
+              <td><span class="pill">n/a</span></td>
+              <td><span class="mono">2.0+</span></td>
+            </tr>
+            <tr>
+              <td style="text-align: left;"><span class="mono">copyright</span></td>
+              <td class="cell-done">done · 1e9f8d7</td>
+              <td class="cell-todo">todo · —</td>
+              <td class="cell-todo">todo · —</td>
+              <td class="cell-todo">todo · —</td>
+              <td class="cell-todo">todo · —</td>
+              <td><span class="pill">n/a</span></td>
+              <td><span class="mono">2.0+</span></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h4 style="margin-top: 24px; margin-bottom: 8px;">SSR 渲染缓存监控 · v1.3.1 落地</h4>
+        <div class="kpi-grid" style="grid-template-columns: repeat(5, 1fr);">
+          <div class="kpi-card success"><div class="kpi-label">命中</div><div class="kpi-value" style="font-size: 16px;">98.4%</div><div class="kpi-delta">≥ 95% ✓</div></div>
+          <div class="kpi-card success"><div class="kpi-label">失败</div><div class="kpi-value" style="font-size: 16px;">0.2%</div><div class="kpi-delta">≤ 0.5% ✓</div></div>
+          <div class="kpi-card"><div class="kpi-label">延迟 p95</div><div class="kpi-value" style="font-size: 16px;">684ms</div><div class="kpi-delta">≤ 800ms ✓</div></div>
+          <div class="kpi-card"><div class="kpi-label">hash 变化</div><div class="kpi-value" style="font-size: 16px;">3</div><div class="kpi-delta">最近 24h · 视图 ›</div></div>
+          <div class="kpi-card success"><div class="kpi-label">fallback 触发</div><div class="kpi-value" style="font-size: 16px;">0.08%</div><div class="kpi-delta">≤ 0.1% ✓</div></div>
+        </div>
+
+        <h4 style="margin-top: 24px; margin-bottom: 8px;">注销冷静期 · 15 天规则</h4>
+        <table class="admin-table">
+          <thead>
+            <tr><th>用户</th><th>申请时间</th><th>冷静期结束</th><th>状态</th><th>财务标记</th><th>操作</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="mono">u_4f2e1d8c</td><td class="mono">2026.06.23</td><td class="mono">2026.07.08</td><td><span class="pill info">冷静期 · 8d</span></td><td><span class="pill warn">余额不退款</span></td><td><div class="row-actions"><button>查看</button><button>恢复账号</button></div></td></tr>
+            <tr><td class="mono">u_8a9b0c1d</td><td class="mono">2026.06.21</td><td class="mono">2026.07.06</td><td><span class="pill info">冷静期 · 6d</span></td><td><span class="pill warn">余额不退款</span></td><td><div class="row-actions"><button>查看</button><button>恢复账号</button></div></td></tr>
+            <tr style="opacity: 0.6;"><td class="mono">u_5e6f7g8h</td><td class="mono">2026.06.12</td><td class="mono">2026.06.27 ✓</td><td><span class="pill">已完成</span></td><td><span class="pill muted">余额不退款 · 已核销</span></td><td><div class="row-actions"><button>查看</button></div></td></tr>
+          </tbody>
+        </table>
+
+        <div class="note-block" style="margin-top: 20px;">
+          <div class="note-title">locales.json 字典外提 · v1.3.1 决策</div>
+          <p><code class="mono">locales.json</code> 已抽离为前端 + 后端共用字典（含 <code class="mono">version / locales / localeMeta / slugs[].titles{5} / hashes{5} / status{5} / summary / implementation</code> 字段）· 后端 <code class="mono">/api/legal/manifest</code> 接口 docs 字段与 locales.json 同结构 · locales.json 作为 fallback 兜底 · 翻译公司 / 法务仅编辑此 JSON · 不引入第三方翻译 SDK · 评审会现场演示翻译工作流（点 en chip → 8 张 anchor 卡全部切换）。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- ═══════════════════════════════════════════════════════════════ PART 11 · 用户端 vs admin 对齐矩阵 -->
+
+<section class="section" id="alignment" data-od-id="alignment">
+  <div class="container">
+    <div class="eyebrow">PART 11 · 用户端 v1.3.1 ↔ admin v1.0 对齐矩阵</div>
+    <h2>11 条用户端决策 · admin 端承接路径</h2>
+    <p class="lede">每条用户端决策明确指出 admin 端的承接页面、字段、流程、监控点。两份文档在 PM 评审会可一一对照评审。</p>
+
+    <table class="scope-table">
+      <thead>
+        <tr><th style="width:120px;">用户端决策</th><th style="width:200px;">决策核心</th><th>admin 端承接</th><th>监控点</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="badge v131">v0.3</span></td>
+          <td>Marketplace 不引入第三方内容</td>
+          <td><code class="mono">/marketplace</code> 已下线红色横幅 + <code class="mono">/ai-masters</code> 承载 practitioners 历史数据 · <code class="mono">/community</code> 改名「氛围运营」</td>
+          <td>Audit log · practitioners 历史只读</td>
+        </tr>
+        <tr>
+          <td><span class="badge v131">v0.3</span></td>
+          <td>解读语言模型后端化</td>
+          <td><code class="mono">/ai-providers</code> + <code class="mono">/prompts</code> 加版本号字段（v1 → v2 → v3）· 后端化字段显式标注「前端不读」</td>
+          <td>prompt 版本切换 24h 内 · 失败率告警</td>
+        </tr>
+        <tr>
+          <td><span class="badge v131">v0.4</span></td>
+          <td>晨间仪轨 · 易经 + 不支持离线 + 5min 兜底</td>
+          <td><code class="mono">/readings</code> 易经来源显式标注 · <code class="mono">/analytics</code> 兜底 5min 停留率报表 · <code class="mono">/dashboard</code> 告警卡</td>
+          <td>晨间仪轨下推失败告警 · 5min 停留率</td>
+        </tr>
+        <tr>
+          <td><span class="badge v131">v0.4</span></td>
+          <td>辰时下推失败兜底 · 用户态不可调</td>
+          <td><code class="mono">/system</code> ambient loop:true + crossfadeMs:4000 写死 · 用户态不可调锁定</td>
+          <td>辰时下推失败率 ≤ 0.1%</td>
+        </tr>
+        <tr>
+          <td><span class="badge v131">v0.5</span></td>
+          <td>大师声线 · 弥勒寺 + 真人克隆</td>
+          <td><code class="mono">/ai-masters</code> 加「弥勒寺采样计划」字段 · 真人克隆授权链路 · 备播方案</td>
+          <td>采样排期 · 授权链路 6 条款 · 严禁纯合成音替代标记</td>
+        </tr>
+        <tr>
+          <td><span class="badge v131">v0.7</span></td>
+          <td>用户状态轴 · 5 档</td>
+          <td><code class="mono">/users</code> tier 命名对齐（墨客 / 朱砂 / 玉 / 金 / 已过期）· T-7d/T-3d/T-0/T+X/T+30d 时间线字段</td>
+          <td>5 档用户分布 · 续费率报表</td>
+        </tr>
+        <tr>
+          <td><span class="badge v131">v0.9</span></td>
+          <td>注册仅手机号 + 验证码</td>
+          <td>admin 与用户登录解耦（D11）· admin 端仅邮箱 + 密码 · 两套 token 独立</td>
+          <td>admin 登录 audit · 用户端登录 audit 分别追踪</td>
+        </tr>
+        <tr>
+          <td><span class="badge v131">v0.9</span></td>
+          <td>注销前会员余额不退款</td>
+          <td><code class="mono">/users</code> 注销冷静期字段 · <code class="mono">/privacy</code> 注销流程 · 财务端"已消耗"科目核销</td>
+          <td>注销冷静期 15 天 · 余额不退款标签</td>
+        </tr>
+        <tr>
+          <td><span class="badge v131">v0.9</span></td>
+          <td>法务 SSR · 后端渲染</td>
+          <td><code class="mono">/privacy</code> SSR 渲染缓存监控 + 5 埋点告警 · URL 模板 <code class="mono">/legal?doc={slug}&amp;v={hash}</code></td>
+          <td>命中 ≥ 95% · 失败 ≤ 0.5% · 延迟 p95 ≤ 800ms · fallback ≤ 0.1%</td>
+        </tr>
+        <tr>
+          <td><span class="badge v131">v1.0</span></td>
+          <td>法务 manifest · 8 slug × 5 locale</td>
+          <td><code class="mono">/privacy</code> 40 文档追踪表 · <code class="mono">/api/legal/manifest</code> 后端接口 · locales.json 字典外提</td>
+          <td>40 文档进度 · hash 变化追踪 · 翻译公司对齐</td>
+        </tr>
+        <tr>
+          <td><span class="badge v131">v1.1</span></td>
+          <td>支付弹窗 + 6 态状态机</td>
+          <td><code class="mono">/payments</code> 6 态状态机 · 5 节点时间轴 · 三方回执号脱敏 · 不暴露 SDK 字段</td>
+          <td>重复支付告警 · 退款冷静期 ≤ 3min · 大师按条逆逻辑</td>
+        </tr>
+        <tr>
+          <td><span class="badge v131">v1.1</span></td>
+          <td>心愿解签包续费延长</td>
+          <td><code class="mono">/payments</code> 心愿解签包卡片 · 续费延长 1 年字段 · ¥12 / ¥6 早鸟价</td>
+          <td>wish-pack 用户清单 · 续费率</td>
+        </tr>
+        <tr>
+          <td><span class="badge v131">v1.1</span></td>
+          <td>大师按条计费逆逻辑</td>
+          <td><code class="mono">/payments</code> 大师按条扣会员次数字段 · 不足后按单价扣费入账</td>
+          <td>先扣会员次数占比 · 不足后单价扣费占比</td>
+        </tr>
+        <tr>
+          <td><span class="badge v131">v1.1</span></td>
+          <td>7 天朱砂续费引导</td>
+          <td><code class="mono">/users</code> 朱砂 7 天到期 tab · <code class="mono">/dashboard</code> KPI 卡</td>
+          <td>7 天到期用户清单 · 续费率</td>
+        </tr>
+        <tr>
+          <td><span class="badge v131">v1.2</span></td>
+          <td>i18n locales · 5 locale</td>
+          <td><code class="mono">/users</code> language 字段对齐 locales.json · <code class="mono">/community</code> 5 locale 内容审核视图</td>
+          <td>5 locale 用户分布 · 内容审核响应时长</td>
+        </tr>
+        <tr>
+          <td><span class="badge v131">v1.3.1</span></td>
+          <td>locales.json + order-timeline.json 字典外提</td>
+          <td><code class="mono">/privacy</code> 字典在线编辑 · <code class="mono">/payments</code> 5 节点时间轴数据源</td>
+          <td>字典 hash 变化 · 字典翻译进度</td>
+        </tr>
+<tr>
+          <td><span class="badge v131">v1.3.1</span><br><span class="badge v11">v1.1 深化</span></td>
+          <td>声音 manifest · 38 段音</td>
+          <td><code class="mono">/audio-manifest</code> · <strong>v1.1 独立页</strong> · 38 段音后端下推配置 · loop:true + crossfadeMs:4000 写死 · 用户态不可调锁定 · preview 段待 PM 现场播放验收</td>
+          <td>音频资产清单 · ambient 拼接自然度 · 用户态 UI 控件暴露监控 · preview 段验收进度 · 弥勒寺采样窗口</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="callout">
+      <h4>PART 11 · admin 端未承接的用户端决策清单</h4>
+      <p>以下用户端决策不需要 admin 端特殊承接（已由前端承载）：</p>
+      <ul style="margin-top:8px;">
+        <li><strong>Onboarding 入定 · v0.1 PART 04</strong> · 仅前端动效</li>
+        <li><strong>Discover 五门 · v0.1 PART 05</strong> · 仅前端模块入口</li>
+        <li><strong>晨间仪轨字渐显 · v0.1 PART 06</strong> · 仅前端动效（admin 仅承担易经来源标注）</li>
+        <li><strong>心愿 4 步仪式动线 · v0.2 PART 14</strong> · 仅前端动效（admin 仅承担 wish-pack 用户视图）</li>
+        <li><strong>16 枚 Eastern Zen 图标 · v0.2 PART 13</strong> · 设计资产，无 admin 承接</li>
+      </ul>
+    </div>
+  </div>
+</section>
+<!-- ═══════════════════════════════════════════════════════════════ PART 12 · MOCKUP · Audio Manifest -->
+
+<section class="section" id="mockup-audio" data-od-id="mockup-audio">
+  <div class="container">
+    <div class="eyebrow">PART 12 · MOCKUP · 音频 Manifest · D06 决策深化</div>
+    <h2>38 段音后端下推 · admin 端独立可视化页</h2>
+    <p class="lede">D06 决策深化 · v1.1 · 2026.07.01 · 把 38 段音配置从 SystemConfigPage 拆出 · 独立 AudioManifestPage · 与用户端 soulai-pm-review.html PART 17「音效系统」+ D06 v0.4/v1.3.1 决策对齐。</p>
+
+    <div class="am-shell">
+      <div class="am-header">
+        <h3>音频资产 Manifest</h3>
+        <span class="badge v11">D06 决策深化 · v1.1</span>
+      </div>
+
+      <div class="am-counts">
+        <div class="am-count-card live">
+          <div class="num">27</div>
+          <div class="lbl">已上线 live</div>
+        </div>
+        <div class="am-count-card preview">
+          <div class="num">10</div>
+          <div class="lbl">预览 preview · 待 PM 验收</div>
+        </div>
+        <div class="am-count-card draft">
+          <div class="num">1</div>
+          <div class="lbl">草稿 draft</div>
+        </div>
+        <div class="am-count-card">
+          <div class="num">38</div>
+          <div class="lbl">总计 · 7L1 + 18L2 + 13L3</div>
+        </div>
+      </div>
+
+      <h4 style="margin-top:32px;">3 层结构 · 与用户端 PART 17 同源</h4>
+      <div class="am-counts">
+        <div class="am-count-card" style="border-left: 3px solid oklch(54% 0.14 145);">
+          <div class="num">7</div>
+          <div class="lbl">L1 底色氛围 · loop:true + crossfadeMs:4000 写死</div>
+        </div>
+        <div class="am-count-card" style="border-left: 3px solid var(--cinnabar);">
+          <div class="num">18</div>
+          <div class="lbl">L2 仪式触发 · ≤ 600ms 单声部</div>
+        </div>
+        <div class="am-count-card" style="border-left: 3px solid oklch(58% 0.06 250);">
+          <div class="num">13</div>
+          <div class="lbl">L3 结果呈现 · 与字渐显 1:1 同步</div>
+        </div>
+      </div>
+
+      <h4 style="margin-top:32px;">关键 10 段 · preview 待 PM 现场播放验收</h4>
+      <table class="am-table">
+        <thead>
+          <tr>
+            <th>Key</th><th>层</th><th>分类</th><th>标签</th><th>负责人</th><th>状态</th><th>备注</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><span class="am-key">ambient.shamo</span></td><td>L1</td><td>底色氛围</td><td>沙·行旅</td><td>张砚</td><td><span class="am-pill preview">preview</span></td><td>v1.0 启动前 PM 现场验收</td></tr>
+          <tr><td><span class="am-key">ambient.yujing</span></td><td>L1</td><td>底色氛围</td><td>雨·净境</td><td>张砚</td><td><span class="am-pill preview">preview</span></td><td>拼接点自然过渡测试</td></tr>
+          <tr><td><span class="am-key">ambient.haichao</span></td><td>L1</td><td>底色氛围</td><td>海·潮生</td><td>张砚</td><td><span class="am-pill preview">preview</span></td><td>断流 8s 不重试验证</td></tr>
+          <tr><td><span class="am-key">voice.xuanzhen</span></td><td>L3</td><td>大师声线</td><td>玄真子·东方古音</td><td>周声</td><td><span class="am-pill preview">preview</span></td><td>v1.0 后赴弥勒寺替换</td></tr>
+          <tr><td><span class="am-key">voice.huiming</span></td><td>L3</td><td>大师声线</td><td>慧明·中州清亮</td><td>周声</td><td><span class="am-pill preview">preview</span></td><td>v1.0 后赴弥勒寺替换</td></tr>
+          <tr><td><span class="am-key">voice.lingyin</span></td><td>L3</td><td>大师声线</td><td>灵隐·南国柔缓</td><td>周声</td><td><span class="am-pill preview">preview</span></td><td>v1.0 后赴弥勒寺替换</td></tr>
+          <tr><td><span class="am-key">voice.aurora</span></td><td>L3</td><td>大师声线</td><td>Aurora·西方低柔</td><td>Sara</td><td><span class="am-pill preview">preview</span></td><td>签约真人 · 授权克隆</td></tr>
+          <tr><td><span class="am-key">voice.luna</span></td><td>L3</td><td>大师声线</td><td>Luna·西方清亮</td><td>Mia</td><td><span class="am-pill preview">preview</span></td><td>签约真人 · 授权克隆</td></tr>
+          <tr><td><span class="am-key">trigger.master.hello</span></td><td>L2</td><td>仪式触发</td><td>大师·问候铃</td><td>李旷</td><td><span class="am-pill preview">preview</span></td><td>0.2s 前置时序验证</td></tr>
+          <tr><td><span class="am-key">ambient.xingchen</span></td><td>L1</td><td>底色氛围</td><td>星·夜巡</td><td>张砚</td><td><span class="am-pill draft">draft</span></td><td>草稿 · 待补录音</td></tr>
+        </tbody>
+      </table>
+
+      <div class="note-block" style="margin-top:32px;">
+        <div class="note-title">D06 · v1.1 决策深化 · 与用户端 v1.3.1 对齐</div>
+        <ul style="margin-top:8px; font-size: 13px; line-height: 1.8;">
+          <li><strong>38 段音全部自营 + 授权</strong>（v0.4 决策）· 底色 7 + 触发 18 + 结果 13 · 每段附 <code>licenseRef</code> 供合规审计</li>
+          <li><strong>大师声线 v1.0 起替换为弥勒寺采样</strong>（v0.5 决策）· 玄真子 / 慧明 / 灵隐 赴普陀/九华/灵隐 候选 · Aurora / Luna 签约真人 · 授权克隆 · 严禁纯合成音替代</li>
+          <li><strong>L1 ambient 拼接点自然过渡</strong> · loop:true + crossfadeMs:4000 写死常量 · 8s 主段 + 4s 尾段对齐录音 · 等功率淡入淡出 · 用户态不可调</li>
+          <li><strong>音效用律 5 条</strong> · 0.2s 前置 / 揭示音与字同步 / 不叠底色 / 朱砂按钮同步振动 / 声音即身份</li>
+          <li><strong>字段对齐 locales.json / order-timeline.json</strong> · audio-manifest.json 同源 schema · 后端持有 · 前端只读</li>
+          <li><strong>SystemConfigPage 拆分</strong> · 不再承担 ambient / trigger / reveal 三层配置 · 仅保留安全阈值 / 订阅权益 / 免费额度 / 多语言 / 公告配置</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="mockup-frame">
+      <h3 style="font-family: var(--font-display); font-size: 18px; color: var(--ink-deep); margin: 0 0 12px;">AudioManifestPage · TSX 源代码概要</h3>
+      <p style="font-size: 13px; color: var(--muted); margin: 0 0 12px;">已交付 <code>D:\work\soulai\apps\admin\src\admin\AudioManifestPage.tsx</code>（约 16 KB · 38 段音 seed） + <code>D:\work\soulai\apps\admin\src\styles\audioManifestStyles.ts</code>（复用 Eastern Zen OKLch token）+ AdminApp.tsx 路由 + 侧栏导航项。</p>
+      <div style="background: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; font-family: var(--font-mono); font-size: 12px; line-height: 1.8; color: var(--ink-deep);">
+        <div>📄 AudioManifestPage.tsx</div>
+        <div style="color: var(--muted); margin-left: 16px;">├─ 4 KPI 卡（live / preview / draft / 总计）</div>
+        <div style="color: var(--muted); margin-left: 16px;">├─ 3 层结构卡片（L1 / L2 / L3）</div>
+        <div style="color: var(--muted); margin-left: 16px;">├─ 筛选器 + 38 段列表 + 详情侧滑</div>
+        <div style="color: var(--muted); margin-left: 16px;">├─ 音效用律 5 条</div>
+        <div style="color: var(--muted); margin-left: 16px;">└─ D06 决策深化 note-block</div>
+        <div style="margin-top: 8px;">🎨 audioManifestStyles.ts</div>
+        <div style="color: var(--muted); margin-left: 16px;">└─ 复用 OKLch token · 不引入新视觉令牌</div>
+        <div style="margin-top: 8px;">🔗 AdminApp.tsx</div>
+        <div style="color: var(--muted); margin-left: 16px;">├─ import AudioManifestPage</div>
+        <div style="color: var(--muted); margin-left: 16px;">├─ type Page 加 'audio-manifest'</div>
+        <div style="color: var(--muted); margin-left: 16px;">├─ 路由渲染</div>
+        <div style="color: var(--muted); margin-left: 16px;">└─ 侧栏导航项「音频 Manifest」♪</div>
+        <div style="margin-top: 8px;">📝 SystemConfigPage.tsx</div>
+        <div style="color: var(--muted); margin-left: 16px;">└─ 文件头加 v1.1 注释：38 段音已拆分至 AudioManifestPage</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════════════ PART 13 · Closing -->
+
+<section class="section" id="closing" data-od-id="closing">
+  <div class="container">
+    <div class="eyebrow">PART 13 · 收尾 · admin v1.2 DECIDED · Next Steps</div>
+<h2>admin v1.2 已锁 · 13 条决策 · 7 页 mockup · 与用户端 v1.3.1 全对齐</h2>
+    <p class="lede">本评审页 admin-pm-review.html v1.2 · 2026.07.01 · 已交付：16 页功能边界重审 + 13 条 PM 决策（D06 v1.1 深化：38 段音从 system 拆出独立 AudioManifestPage · <strong>D12 v1.2 视觉重塑：SystemConfigPage 全量 Eastern Zen 重塑</strong>）+ Eastern Zen 后台变体视觉令牌 + 7 页高保真 mockup（Login / Dashboard / Users / Payments / AI Masters / Privacy / Audio Manifest）+ 用户端 vs admin 对齐矩阵。</p>
+
+    <h3 style="margin-top:48px;">v1.2 DECIDED · 13 条决策已锁（v1.0 的 11 条 + D06 v1.1 深化 + D12 v1.2 视觉重塑）</h3>
+    <div class="decisions-grid">
+      <div class="decision-card">
+        <div class="dc-tag">D01 · v1.0 决策</div>
+        <h4>Eastern Zen 后台视觉令牌</h4>
+        <p>复用用户端 6 token + 新增 5 状态 token + 5 版本 tag 视觉区分</p>
+        <p class="dc-anchor">→ #tokens</p>
+      </div>
+      <div class="decision-card">
+        <div class="dc-tag">D02 · v0.3 决策可视化</div>
+        <h4>Marketplace 已下线</h4>
+        <p>路由保留 + 红色横幅 + 历史数据迁移 ai-masters · 不再开发</p>
+        <p class="dc-anchor">→ #scope</p>
+      </div>
+      <div class="decision-card">
+        <div class="dc-tag">D03 · v0.5 决策可视化</div>
+        <h4>弥勒寺采样计划字段</h4>
+        <p>采样窗口 / 真人克隆授权链路 / 备播方案 / 替换排期 · 5 位大师固定</p>
+        <p class="dc-anchor">→ #mockup-masters</p>
+      </div>
+      <div class="decision-card">
+        <div class="dc-tag">D04 · v1.0-v1.3.1 决策</div>
+        <h4>40 文档追踪 + locales.json</h4>
+        <p>8 slug × 5 locale · hash 校验 · SSR 监控 · 5 埋点告警 · 注销冷静期</p>
+        <p class="dc-anchor">→ #mockup-privacy</p>
+      </div>
+      <div class="decision-card">
+        <div class="dc-tag">D05 · v1.1/v1.3.1 决策</div>
+        <h4>订单详情 5 节点时间轴</h4>
+        <p>复用用户端 MOCKUP 13 · 三方回执号脱敏 · 不暴露 SDK · 大师按条逆逻辑</p>
+        <p class="dc-anchor">→ #mockup-payments</p>
+      </div>
+<div class="decision-card">
+        <div class="dc-tag">D06 · v0.4/v1.3.1 决策 · v1.1 深化</div>
+        <h4>38 段音后端下推配置</h4>
+        <p>3 层结构 · loop:true + crossfadeMs:4000 写死 · 用户态不可调锁定 · <strong>独立 AudioManifestPage</strong></p>
+        <p class="dc-anchor">→ #mockup-audio</p>
+</div>
+      <div class="decision-card" style="border-left: 3px solid oklch(94% 0.025 200);">
+        <div class="dc-tag" style="background: oklch(94% 0.025 200); color: oklch(36% 0.10 200);">D12 · v1.2 决策 · 视觉重塑</div>
+        <h4>SystemConfigPage Eastern Zen 全量重塑</h4>
+        <p>替换 #0a0a1a 暗紫底 + #7C5CFF 紫按钮为 Eastern Zen 宣纸白底 + 朱砂实色按钮 + 墨文本 · 与 AdminApp / PaymentsPage / PrivacyCompliancePage / AiMastersPage / UsersPage / LoginPage / AudioManifestPage 共用同一 OKLch token · 6 tabs（内容安全 / 订阅权益 / Marketplace 已下线 / 免费额度 / 多语言 / 公告配置）· 每 tab 顶部决策对齐 note-block · body bg 升级到宣纸白（v1.0 兜底态与 v1.0 mockup 一致）</p>
+        <p class="dc-anchor">→ 系统配置页 / 全 8 重塑页 OKLch token 同源</p>
+      </div>
+    </div>
+
+    <h3 style="margin-top:48px;">v1.2 决策一致性</h3>
+    <div class="callout">
+      <p>D12 v1.2 视觉重塑 <strong>不关闭任何 Open Question</strong>（5 条 v1.0 占位待定项均维持 · v1.2 是视觉决策而非业务决策）· v1.2 决策的视觉范围：①替换暗紫底 + 紫按钮为 Eastern Zen · ②统一 8 重塑页 OKLch token · ③6 tab 每 tab 顶部决策对齐 note-block · ④保证所有界面颜色样式统一 · ⑤body bg 升级（兜底态与 mockup 一致）</p>
+    </div>
+
+    <h3 style="margin-top:48px;">v1.1 关闭 1 条 Open Question（v1.0 占位 → v1.1 锁）</h3>
+    <ul style="font-size:13px; line-height:1.8;">
+      <li>✅ <strong>Q4 · 38 段音上传 / 替换工作流</strong> → v1.1 锁：D06 深化「独立 AudioManifestPage · 38 段音 seed · 27 live / 10 preview / 1 draft · preview 段待 v1.0 启动前 PM 现场播放验收」</li>
+    </ul>
+
+    <h3 style="margin-top:48px;">Open Questions · v1.0 前待定（剩余 5 条）</h3>
+    <ol>
+      <li><strong>Marketplace 历史数据迁移 SOP</strong> · practitioners 35KB 历史数据迁到 ai-masters 时字段映射 · 是否保留外键引用 · 是否归档为只读视图</li>
+      <li><strong>氛围运营（community 改名）的内容审核规则</strong> · v0.3「无第三方命理师入驻」如何在 admin 端落地审核规则 · 是否需要自动检测关键词</li>
+      <li><strong>注销冷静期的财务核销自动化</strong> · 15 天冷静期到期后"已消耗"科目自动核销 · 是否需要 PM 二次复核 · 大师按条额度在冷静期内是否冻结</li>
+      <li><strong>40 文档翻译公司协作流程</strong> · 翻译公司接入方式（Notion API / 飞书表格 / 自建后台）· 法务终审 vs 翻译公司 PM 协同 SLA</li>
+      <li><strong>admin 操作员权限分级</strong> · 运营 / 内容审核 / 风控 / 法务 四类角色权限边界 · 是否需要二因素认证（v0.9 用户端已实施）</li>
+    </ol>
+
+    <h3 style="margin-top:48px;">Next Steps · v1.2 → v2.0 路线图</h3>
+    <ol>
+      <li><strong>v1.2 关键 8 页源代码重塑</strong>（已在本评审页 mockup 落地）· AdminApp / LoginPage / DashboardPage / UsersPage / PaymentsPage / AiMastersPage / PrivacyCompliancePage / AudioManifestPage / <strong>SystemConfigPage</strong> 全部视觉 Eastern Zen + 字段补齐 · D01 + D12 双决策</li>
+      <li><strong>评审会现场演示</strong> · locales.json 5 locale 切换 + 订单 5 节点时间轴 + 40 文档追踪表 + SystemConfigPage 6 tab 决策对齐 四个交互现场演示给 PM / 后端 / 法务 / 翻译公司四方</li>
+      <li><strong>v1.3 Marketplace 历史数据迁移</strong> · 35KB practitioners 数据迁到 ai-masters · community 改名「氛围运营」· 新增 v0.3 / v0.5 / v0.9 audit log 字段</li>
+      <li><strong>v1.4 38 段音后端下推实施</strong> · 弥勒寺采样 2026.08.12 启动 → 采样完成后批量上传 → v1.0 上线前由 PM 现场播放验收 ambient 拼接自然度</li>
+      <li><strong>v2.0 admin 端国际化</strong> · 当前 admin 仅 zh / en · 扩展到 5 locale（zh-CN / en / vi / th / my）· 与用户端 locales.json 同步</li>
+    </ol>
+
+<div class="callout">
+      <h4>PART 13 · admin v1.2 交付清单（v1.0 + D06 v1.1 深化 + D12 v1.2 视觉重塑）</h4>
+      <ul style="margin-top:8px;">
+        <li>✅ <strong>admin-pm-review.html</strong> · 13 节评审 + 7 页 mockup + 用户端 vs admin 对齐矩阵 · 本文件 v1.2</li>
+        <li>✅ <strong>Eastern Zen 后台变体视觉令牌</strong> · 复用 6 token + 新增 5 状态 token + 5 版本 tag · admin/src/index.css v1.2 已升级 body bg 到宣纸白</li>
+        <li>✅ <strong>7 页 mockup</strong> · Login / Dashboard / Users / Payments / AI Masters / Privacy / Audio Manifest · 已在本评审页落地</li>
+        <li>✅ <strong>v1.1 新增源代码交付</strong> · AudioManifestPage.tsx + audioManifestStyles.ts + AdminApp.tsx 路由 + 侧栏导航 · D06 决策深化</li>
+        <li>✅ <strong>v1.2 新增源代码交付</strong> · SystemConfigPage.tsx + systemConfigStyles.ts · D12 视觉重塑 · <strong>已交付</strong>（本轮 v1.2）</li>
+        <li>🔄 <strong>其余 6 页源代码视觉重塑</strong> · DashboardPage / AnalyticsPage / AiProvidersPage / AiQualityPage / ReadingsPage / SecurityPage · 下一步交付（v1.3）</li>
+        <li>🔄 <strong>api.ts 字段补齐</strong> · 加 locales.json 在线编辑接口 · 5 埋点监控接口 · 大师按条逆逻辑判定字段 · /api/audio/manifest 接口 · 下一步交付</li>
+      </ul>
+    </div>
+
+    <div class="note-block" style="margin-top: 32px;">
+      <div class="note-title">v1.2 · 2026.07.01 · D06 v1.1 决策深化 + D12 v1.2 视觉重塑 · PM 重审完成</div>
+      <p>本评审页与 <strong>soulai-pm-review.html v1.3.1</strong> 在 PM 评审会现场可一一对照评审：用户端决策在哪里定（用户端 PART 03 / 17 / 19 / 20 / 21 / 22 / 23 / 24 / v1.3.1 locales.json / v1.3.1 order-timeline.json / v1.3.1 声音 manifest），admin 端在哪里承接（PART 02 / 03 / 05-10 / 12 mockup）。两份评审文档共同构成 SoulAI v1.0 完整评审体系。v1.2 视觉重塑保证 admin 后台与用户端 Eastern Zen 完全一致 —— 朱砂 + 墨 + 宣纸 · 一个视觉系统贯穿 SoulAI 端到端。</p>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer style="padding: 32px 0; border-top: 1px solid var(--border); background: var(--surface-2); margin-top: 32px;">
+  <div class="container" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; font-size: 12px; color: var(--muted);">
+    <div>
+      <span style="font-family: var(--font-display); color: var(--ink-deep); margin-right: 8px;">◆ SoulAI Admin · 后台管理 PM 重审</span>
+<span class="mono">v1.2 · 2026.07.01</span>
+    </div>
+    <div class="mono">
+      <span class="badge v12" style="background: oklch(94% 0.025 200); color: oklch(36% 0.10 200); padding: 4px 10px; border-radius: 4px; font-size: 11px;">v1.2 DECIDED · 13 条</span>
+      <span class="badge v131" style="margin-left: 6px;">v1.3.1 对齐 · 用户端 17 条决策</span>
+      <span class="badge muted" style="margin-left: 6px;">Marketplace 已下线</span>
+      <span class="badge muted" style="margin-left: 6px;">Audio Manifest · D06 深化</span>
+      <span class="badge muted" style="margin-left: 6px;">SystemConfig · D12 v1.2 重塑</span>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
